@@ -1,0 +1,32 @@
+{
+  "name": "moitascarsserver",
+  "version": "1.0.0",
+  "description": "Car demonstration website Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Titasdp/moitasCarsServer.git"
+  },
+  "author": "Tiago De Pina",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Titasdp/moitasCarsServer/issues"
+  },
+  "homepage": "https://github.com/Titasdp/moitasCarsServer#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "cloudinary": "^1.25.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.1",
+    "express-sanitizer": "^1.0.5",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.2.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
