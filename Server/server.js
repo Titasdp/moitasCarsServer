@@ -3,9 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
-// const router = require("../Server/Routes/routes");
+const router = require("../Server/Routes/routes");
 const sequelize = require("../Server/Database/connection.js");
-// const expressSanitizer = require("express-sanitizer");
+const expressSanitizer = require("express-sanitizer");
 
 app.use(bodyParser.json());
 app.use(
@@ -13,9 +13,10 @@ app.use(
         extended: false
     })
 );
-// app.use(router);
+app.use(expressSanitizer());
+app.use(router);
 
-// app.use(expressSanitizer());
+
 testBdConnection = async () => {
     try {
         await sequelize.authenticate();

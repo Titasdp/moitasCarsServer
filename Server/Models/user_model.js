@@ -21,6 +21,16 @@ User.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+    created_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    },
+    updated_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    }
 }, {
     sequelize,
     timestamps: true,

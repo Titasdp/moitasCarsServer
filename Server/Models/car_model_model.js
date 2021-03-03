@@ -19,6 +19,16 @@ CarModel.init({
         allowNull: false,
         unique: true,
     },
+    created_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    },
+    updated_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    }
 }, {
     sequelize,
     timestamps: true,

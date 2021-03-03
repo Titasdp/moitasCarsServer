@@ -26,7 +26,7 @@ Car.init({
         unique: true,
     },
     description: {
-        type: DataTypes.STRING(45),
+        type: DataTypes.TEXT,
         allowNull: false
     },
     img_url: {
@@ -43,13 +43,33 @@ Car.init({
         allowNull: true,
     },
     top_speed: {
-        type: DataTypes.INTEGER(),
+        type: DataTypes.INTEGER,
         allowNull: true,
     },
     production_date: {
-        type: DataTypes.INTEGER(),
+        type: DataTypes.INTEGER,
         allowNull: true,
     },
+    facebook_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },
+    custoJusto_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },
+    created_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    },
+    updated_at: {
+        type: 'TIMESTAMP',
+        defaultValue: sequelize.NOW,
+        allowNull: false,
+    }
 }, {
     sequelize,
     timestamps: true,

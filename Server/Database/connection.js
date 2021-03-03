@@ -17,9 +17,7 @@ const sequelize = new Sequelize(
 );
 
 sequelize
-    .sync({
-        alter: true
-    })
+    .sync()
     .then(response => {
         console.log("Sequelize is working normally");
     })
