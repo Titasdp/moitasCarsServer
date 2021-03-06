@@ -1,12 +1,11 @@
-const brandModel = require("../Models/brand_model")
+const fuelTypeModel = require("../Models/fuel_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
-const Sequelize = require("sequelize");
 
-getBrands = (req, callback) => {
+getFuels = (req, callback) => {
     sequelize
-        .query("SELECT * FROM brand", {
-            model: brandModel.Brand
+        .query("SELECT * FROM fuel", {
+            model: fuelTypeModel.Fuel
         })
         .then(data => {
             return callback(true, data)
@@ -15,18 +14,18 @@ getBrands = (req, callback) => {
             return callback(false, error)
         });
 };
-addBrand = (req, callback) => {
+addFuel = (req, callback) => {
     sequelize
         .query(
-            "INSERT INTO brand (id_brand, designation) VALUES (:brand);", {
+            "INSERT INTO fuel (id_fuel_type, designation) VALUES (:fuelType);", {
                 replacements: {
-                    brand: [
-                        req.sanitize(uniqid(undefined, "-brand")),
+                    fuelType: [
+                        req.sanitize(uniqid(undefined, "-fuel")),
                         req.sanitize(req.body.designation),
                     ]
                 }
             }, {
-                model: brandModel.Brand
+                model: fuelTypeModel.Fuel
             }
         )
         .then(data => {
@@ -37,12 +36,12 @@ addBrand = (req, callback) => {
         });
 };
 
-updateBrandDesign = (req, callback) => {
+updateFuel = (req, callback) => {
     sequelize
         .query(
-            "UPDATE brand SET designation = :designation Where brand.id_brand = :id_brand;", {
+            "UPDATE fuel SET designation = :designation Where fuel.id_fuel_type = :id_fuel_type;", {
                 replacements: {
-                    id_brand: req.sanitize(req.params.id_brand),
+                    id_fuel_type: req.sanitize(req.params.id_fuel_type),
                     designation: req.sanitize(req.params.designation)
                 }
             }, {
@@ -58,7 +57,7 @@ updateBrandDesign = (req, callback) => {
 };
 
 module.exports = {
-    updateBrandDesign,
-    getBrands,
-    addBrand
+    updateFuel,
+    addFuel,
+    getFuels
 };

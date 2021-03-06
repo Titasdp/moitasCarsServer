@@ -52,12 +52,12 @@ Car.init({
     },
     facebook_url: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
         unique: true,
     },
     custoJusto_url: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
         unique: true,
     },
     created_at: {
@@ -83,14 +83,14 @@ Car.init({
 userModel.User.hasMany(Car, {
     foreignKey: {
         name: "publisher_id",
-        allowNull: true,
+        allowNull: false,
         type: DataTypes.STRING,
     }
 });
 Car.belongsTo(userModel.User, {
     foreignKey: {
         name: "publisher_id",
-        allowNull: true,
+        allowNull: false,
         type: DataTypes.STRING,
     }
 });

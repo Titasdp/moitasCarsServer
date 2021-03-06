@@ -1,12 +1,11 @@
-const brandModel = require("../Models/brand_model")
+const countryModel = require("../Models/country_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
-const Sequelize = require("sequelize");
 
-getBrands = (req, callback) => {
+getCountries = (req, callback) => {
     sequelize
-        .query("SELECT * FROM brand", {
-            model: brandModel.Brand
+        .query("SELECT * FROM countries", {
+            model: countryModel.Country
         })
         .then(data => {
             return callback(true, data)
@@ -15,18 +14,19 @@ getBrands = (req, callback) => {
             return callback(false, error)
         });
 };
-addBrand = (req, callback) => {
+addCountry = (req, callback) => {
     sequelize
         .query(
-            "INSERT INTO brand (id_brand, designation) VALUES (:brand);", {
+            "INSERT INTO country (id_country, designation) VALUES (:country);", {
                 replacements: {
-                    brand: [
-                        req.sanitize(uniqid(undefined, "-brand")),
+                    country: [
+                        req.sanitize(uniqid(undefined, "-country")),
                         req.sanitize(req.body.designation),
+                        req.sanitize(req.body.horse_power),
                     ]
                 }
             }, {
-                model: brandModel.Brand
+                model: countryModel.Country
             }
         )
         .then(data => {
@@ -37,16 +37,16 @@ addBrand = (req, callback) => {
         });
 };
 
-updateBrandDesign = (req, callback) => {
+updateCountry = (req, callback) => {
     sequelize
         .query(
-            "UPDATE brand SET designation = :designation Where brand.id_brand = :id_brand;", {
+            "UPDATE engine SET designation = :designation , horse_power =:horse_power Where engine.id_engine = :id_engine;", {
                 replacements: {
-                    id_brand: req.sanitize(req.params.id_brand),
-                    designation: req.sanitize(req.params.designation)
+                    id_engine: req.sanitize(req.params.id_country),
+                    designation: req.sanitize(req.body.designation),
                 }
             }, {
-                model: brandModel.Brand
+                model: engineModel.Engine
             }
         )
         .then(data => {
@@ -57,8 +57,9 @@ updateBrandDesign = (req, callback) => {
         });
 };
 
+
 module.exports = {
-    updateBrandDesign,
-    getBrands,
-    addBrand
+    updateEngine,
+    addEngine,
+    getEngines
 };
