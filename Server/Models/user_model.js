@@ -30,6 +30,11 @@ User.init({
         type: 'TIMESTAMP',
         defaultValue: sequelize.NOW,
         allowNull: false,
+    },
+    filed: {
+        type: DataTypes.INTEGER(1),
+        allowNull: false,
+        defaultValue: 0,
     }
 }, {
     sequelize,

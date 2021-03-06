@@ -60,6 +60,11 @@ Car.init({
         allowNull: false,
         unique: true,
     },
+    filed: {
+        type: DataTypes.INTEGER(1),
+        allowNull: false,
+        defaultValue: 0,
+    },
     created_at: {
         type: 'TIMESTAMP',
         defaultValue: sequelize.NOW,

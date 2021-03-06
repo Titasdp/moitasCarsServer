@@ -1,11 +1,14 @@
-const countryModel = require("../Models/country_model")
+// Just for admins
+const userModel = require("../Models/user_model")
 const sequelize = require("../Database/connection")
+const encryptPack = require("../Middleware/encrypt")
 const uniqid = require('uniqid');
 
-getCountries = (req, callback) => {
+
+getUser = (req, callback) => {
     sequelize
-        .query("SELECT * FROM country", {
-            model: countryModel.Country
+        .query("SELECT * FROM user", {
+            model: userModel.User
         })
         .then(data => {
             return callback(true, data)
@@ -14,18 +17,33 @@ getCountries = (req, callback) => {
             return callback(false, error)
         });
 };
-addCountry = (req, callback) => {
+addUser = (req, callback) => {
+    const data = {}
+    if (req.body.password && req.body.name) {
+        encryptPack.encryptPassword(req.sanitize(req.body.password), (isError, result) => {
+            if (isError) {
+
+            } else {
+                return callback(false, data)
+            }
+
+        })
+    } else {
+        return callback(false, 1)
+    }
+
     sequelize
         .query(
-            "INSERT INTO country (id_country, designation) VALUES (:country);", {
+            "INSERT INTO user (id_user, name, password) VALUES (:user);", {
                 replacements: {
-                    country: [
-                        req.sanitize(uniqid(undefined, "-country")),
-                        req.sanitize(req.body.designation),
+                    user: [
+                        req.sanitize(uniqid(undefined, "-user")),
+                        req.sanitize(req.body.name),
+                        req.sanitize(hash),
                     ]
                 }
             }, {
-                model: countryModel.Country
+                model: userModel.User
             }
         )
         .then(data => {
@@ -34,6 +52,7 @@ addCountry = (req, callback) => {
         .catch(error => {
             return callback(false, error)
         });
+
 };
 
 updateCountry = (req, callback) => {
