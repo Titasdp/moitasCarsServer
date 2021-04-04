@@ -2,6 +2,7 @@
 const userModel = require("../Models/user_model")
 const sequelize = require("../Database/connection")
 const encryptPack = require("../Middleware/encrypt")
+const generatePassPack = require("../Middleware/randomPassword")
 const uniqid = require('uniqid');
 
 userLogin = (data, callback) => {
@@ -11,7 +12,7 @@ userLogin = (data, callback) => {
     }, (isError, decryptResult) => {
         if (isError) {
             return callback(false, {
-                msg: "something went wrong please try agin, later",
+                msg: "something went wrong please try again, later",
                 error: decryptResult,
                 respCode: 500,
                 token: null
@@ -76,9 +77,10 @@ getUsers = (req, callback) => {
         });
 };
 
-addUser = (req, callback) => {
-    if (req.body.password && req.body.name) {
-        encryptPack.encryptPassword(req.sanitize(req.body.password), (isError, encryptResult) => {
+addUser = async (req, callback) => {
+    if (req.body.name) {
+        let generatedPassword = generatePassPack.generateRandomPass()
+        encryptPack.encryptPassword(req.sanitize(generatedPassword), (isError, encryptResult) => {
             if (isError) {
                 return callback(false, {
                     data: null,
@@ -104,7 +106,8 @@ addUser = (req, callback) => {
                         return callback(true, {
                             data: data,
                             msg: "The user was created successfully",
-                            error: null
+                            error: null,
+                            generatedPassword: generatedPassword
                         })
                     })
                     .catch(insertError => {
@@ -116,6 +119,12 @@ addUser = (req, callback) => {
                     });
             }
         })
+
+
+
+
+
+
     } else {
         return callback(false, {
             data: null,

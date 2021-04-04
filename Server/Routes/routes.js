@@ -78,7 +78,7 @@ router.get("/brands", (req, res) => {
 router.post("/brands", (req, res) => {
     brandController.getBrands(req, (success, result) => {
         if (success == true) {
-            res.status(201).json({
+            res.status(201).send({
                 data: data[0],
                 message: "Brand created with success",
                 error: null,
@@ -97,7 +97,7 @@ router.post("/brands", (req, res) => {
 router.patch("/brands", (req, res) => {
     brandController.updateBrandDesign(req, (success, result) => {
         if (success == true) {
-            res.status(200).json({
+            res.status(200).send({
                 data: result,
                 message: "The data was updated with successfully",
                 error: null,
@@ -133,12 +133,17 @@ router.post("/login", (req, res) => {
 router.post("/users", (req, res) => {
     userController.addUser(req, (success, result) => {
         if (success == true) {
-            res.status(200).json(result);
+            res.status(201).send({
+                data: data,
+                message: result.msg,
+                error: null,
+                generatedPassword: result.generatedPassword
+            });
         } else {
             res.status(400).send({
                 data: null,
-                message: "Something went wrong please try again later",
-                error: result,
+                message: result.msg,
+                error: result.error,
             });
         }
     });
