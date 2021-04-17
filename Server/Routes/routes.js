@@ -113,14 +113,14 @@ router.patch("/brands", (req, res) => {
 });
 //>
 
-
+// !
 //<User routes
 router.post("/login", (req, res) => {
     userController.getUserByName(req, (success, result) => {
         if (success == true) {
             res.status(200).json("ctt");
         } else {
-            res.status(400).send({
+            res.status(202).send({
                 data: null,
                 message: "Something went wrong please try again later",
                 error: result,
@@ -130,11 +130,42 @@ router.post("/login", (req, res) => {
 });
 
 
+router.patch("/users/:id_user/password", (req, res) => {
+    userController.getUserById(req, (success, result) => {
+        //secondPart
+        if (success == true) {
+            userController.updateUserPassword({
+                userData: result[0],
+                oldPassword: req.sanitize(req.body.oldPassword),
+                newPassword: req.sanitize(req.body.newPassword)
+            }, (upDateSuccess, returnedObj) => {
+                if (upDateSuccess == true) {
+                    res.status(200).send({
+                        data: returnedObj
+
+                    });
+                } else {
+                    res.status(returnedObj.respCode).send({
+                        data: null,
+                        message: returnedObj.msg,
+                        error: returnedObj.error,
+                    });
+                }
+            });
+        } else {
+            res.status(204).send({
+                data: null,
+                message: "Something went wrong please try again later",
+                error: result,
+            });
+        }
+    });
+});
 router.post("/users", (req, res) => {
     userController.addUser(req, (success, result) => {
         if (success == true) {
             res.status(201).send({
-                data: data,
+                data: result.returnData,
                 message: result.msg,
                 error: null,
                 generatedPassword: result.generatedPassword

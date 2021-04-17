@@ -12,7 +12,7 @@ User.init({
         primaryKey: true,
         unique: true
     },
-    name: {
+    username: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,

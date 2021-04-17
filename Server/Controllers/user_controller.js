@@ -49,7 +49,7 @@ userLogin = (data, callback) => {
 
 getUserByName = (req, callback) => {
     sequelize
-        .query("SELECT * FROM user where user.name = :name user.filed!= 1", {
+        .query("SELECT * FROM user where user.name = :name", {
             replacements: {
                 name: req.sanitize(req.body.username)
             }
@@ -64,36 +64,55 @@ getUserByName = (req, callback) => {
         });
 };
 
-getUsers = (req, callback) => {
+
+getUserById = (req, callback) => {
     sequelize
-        .query("SELECT * FROM user", {
+        .query("SELECT * FROM user where user.id_user = :id_user", {
+            replacements: {
+                id_user: req.sanitize(req.params.id_user)
+            }
+        }, {
             model: userModel.User
         })
         .then(data => {
-            return callback(true, data)
+            return callback(true, data[0])
         })
         .catch(error => {
             return callback(false, error)
         });
 };
 
-addUser = async (req, callback) => {
+
+// getUsers = (req, callback) => {
+//     sequelize
+//         .query("SELECT * FROM user", {
+//             model: userModel.User
+//         })
+//         .then(data => {
+//             return callback(true, data)
+//         })
+//         .catch(error => {
+//             return callback(false, error)
+//         });
+// };
+
+addUser = (req, callback) => {
     if (req.body.name) {
         let generatedPassword = generatePassPack.generateRandomPass()
+        console.log(generatedPassword);
         encryptPack.encryptPassword(req.sanitize(generatedPassword), (isError, encryptResult) => {
             if (isError) {
                 return callback(false, {
-                    data: null,
                     msg: "Something went wrong please try again later",
                     error: encryptResult
                 })
             } else {
                 sequelize
                     .query(
-                        "INSERT INTO user (id_user, name, password) VALUES (:user);", {
+                        "INSERT INTO user (id_user, username, password) VALUES (:user);", {
                             replacements: {
                                 user: [
-                                    req.sanitize(uniqid(undefined, "-user")),
+                                    req.sanitize(uniqid(undefined, "_User")),
                                     req.sanitize(req.body.name),
                                     req.sanitize(encryptResult),
                                 ]
@@ -101,33 +120,25 @@ addUser = async (req, callback) => {
                         }, {
                             model: userModel.User
                         }
-                    )
-                    .then(data => {
+                    ).then(data => {
+                        console.log(data);
                         return callback(true, {
-                            data: data,
+                            returnData: data,
                             msg: "The user was created successfully",
                             error: null,
                             generatedPassword: generatedPassword
                         })
-                    })
-                    .catch(insertError => {
+                    }).catch(insertError => {
+                        console.log(insertError)
                         return callback(false, {
-                            data: null,
                             msg: "Something went wrong please try again later",
                             error: insertError
                         })
                     });
             }
         })
-
-
-
-
-
-
     } else {
         return callback(false, {
-            data: null,
             msg: "There are fields that are empty, some fields must be filled",
             error: null
         })
@@ -154,51 +165,130 @@ updateUser = (req, callback) => {
         });
 };
 
-fileUser = (req, callback) => {
-    sequelize
-        .query(
-            "UPDATE user SET filed = :val  Where user.id_user = :id_user;", {
-                replacements: {
-                    id_user: req.sanitize(req.params.id_user),
-                    val: req.sanitize(req.body.val),
-                }
-            }, {
-                model: userModel.User
-            }
-        )
-        .then(data => {
-            return callback(true, data)
-        })
-        .catch(error => {
-            return callback(true, error)
-        });
-}
 
-eliminateUser = (req, callback) => {
-    sequelize
-        .query(
-            "DELETE FROM user Where user.id_user = :id_user;", {
-                replacements: {
-                    id_user: req.sanitize(req.params.id_user),
-                }
-            }, {
-                model: userModel.User
+
+updateUserPassword = (data, callback) => {
+    encryptPack.decryptPassword({
+        password: data.oldPassword,
+        hash: data.userData.password
+    }, (isError, decryptResult) => {
+        if (isError) {
+            return callback(false, {
+                msg: "something went wrong please try again, later",
+                error: decryptResult,
+                respCode: 500,
+            })
+        } else {
+            if (decryptResult) {
+                encryptPack.encryptPassword(data.newPassword, (isErrorEncrypting, encryptResult) => {
+                    if (isErrorEncrypting) {
+                        return callback(false, {
+                            msg: "Something went wrong please try again, later!",
+                            error: encryptResult,
+                            respCode: 500,
+                        })
+                    } else {
+                        sequelize
+                            .query(
+                                "UPDATE user SET password = :password  Where user.id_user = :id_user", {
+                                    replacements: {
+                                        id_user: data.userData.id_user,
+                                        newPassword: encryptResult,
+                                    }
+                                }, {
+                                    model: userModel.User
+                                }
+                            )
+                            .then(data => {
+                                return callback(true, {
+                                    data: data,
+                                    msg: "User password updated successfully.",
+                                    error: null,
+                                    respCode: 200,
+                                })
+                            })
+                            .catch(error => {
+                                return callback(false, {
+                                    data: null,
+                                    msg: "Something went wrong please try again, later!",
+                                    error: error,
+                                    respCode: 500,
+                                })
+                            });
+                    }
+                })
+            } else {
+                return callback(false, {
+                    data: null,
+                    msg: "The password that has been introduce doesn't match our data.",
+                    error: null,
+                    respCode: 401,
+                })
             }
-        )
-        .then(data => {
-            return callback(true, data)
-        })
-        .catch(error => {
-            return callback(true, error)
-        });
-}
+        }
+    })
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// fileUser = (req, callback) => {
+//     sequelize
+//         .query(
+//             "UPDATE user SET filed = :val  Where user.id_user = :id_user;", {
+//                 replacements: {
+//                     id_user: req.sanitize(req.params.id_user),
+//                     val: req.sanitize(req.body.val),
+//                 }
+//             }, {
+//                 model: userModel.User
+//             }
+//         )
+//         .then(data => {
+//             return callback(true, data)
+//         })
+//         .catch(error => {
+//             return callback(true, error)
+//         });
+// }
+
+// eliminateUser = (req, callback) => {
+//     sequelize
+//         .query(
+//             "DELETE FROM user Where user.id_user = :id_user;", {
+//                 replacements: {
+//                     id_user: req.sanitize(req.params.id_user),
+//                 }
+//             }, {
+//                 model: userModel.User
+//             }
+//         )
+//         .then(data => {
+//             return callback(true, data)
+//         })
+//         .catch(error => {
+//             return callback(true, error)
+//         });
+// }
 
 module.exports = {
     addUser,
-    getUsers,
+    // getUsers,
     updateUser,
-    fileUser,
-    eliminateUser,
+    getUserById,
+    // fileUser,
+    // eliminateUser,
+    updateUserPassword,
     getUserByName,
     userLogin
 };
