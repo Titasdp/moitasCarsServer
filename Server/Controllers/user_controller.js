@@ -3,12 +3,13 @@ const userModel = require("../Models/user_model")
 const sequelize = require("../Database/connection")
 const encryptPack = require("../Middleware/encrypt")
 const generatePassPack = require("../Middleware/randomPassword")
+const tokenPack = require("../Middleware/tokenFunctions")
 const uniqid = require('uniqid');
 
 userLogin = (data, callback) => {
     encryptPack.decryptPassword({
-        password: data.user.password,
-        hash: data.hash
+        password: data.password,
+        hash: data.userData.password,
     }, (isError, decryptResult) => {
         if (isError) {
             return callback(false, {
@@ -19,19 +20,19 @@ userLogin = (data, callback) => {
             })
         } else {
             if (decryptResult) {
-                tokenMiddleware.generateToken({
+                tokenPack.generateToken({
                         user: {
-                            id: data.user.id_user,
+                            id: data.userData.id_user,
                             userCode: "moitasCars"
                         }
                     },
                     token => {
-                        return callback({
+                        return callback(true, {
                             msg: "Successful Login",
                             error: null,
                             token: token,
                             respCode: 200,
-                            username: data.user.id_user
+                            username: data.userData.username
                         });
                     }
                 );
@@ -49,9 +50,9 @@ userLogin = (data, callback) => {
 
 getUserByName = (req, callback) => {
     sequelize
-        .query("SELECT * FROM user where user.name = :name", {
+        .query("SELECT * FROM user where user.username = :username", {
             replacements: {
-                name: req.sanitize(req.body.username)
+                username: req.sanitize(req.body.username)
             }
         }, {
             model: userModel.User
@@ -75,7 +76,7 @@ getUserById = (req, callback) => {
             model: userModel.User
         })
         .then(data => {
-            return callback(true, data[0])
+            return callback(true, data)
         })
         .catch(error => {
             return callback(false, error)
@@ -99,7 +100,6 @@ getUserById = (req, callback) => {
 addUser = (req, callback) => {
     if (req.body.name) {
         let generatedPassword = generatePassPack.generateRandomPass()
-        console.log(generatedPassword);
         encryptPack.encryptPassword(req.sanitize(generatedPassword), (isError, encryptResult) => {
             if (isError) {
                 return callback(false, {
@@ -121,7 +121,6 @@ addUser = (req, callback) => {
                             model: userModel.User
                         }
                     ).then(data => {
-                        console.log(data);
                         return callback(true, {
                             returnData: data,
                             msg: "The user was created successfully",
@@ -129,7 +128,6 @@ addUser = (req, callback) => {
                             generatedPassword: generatedPassword
                         })
                     }).catch(insertError => {
-                        console.log(insertError)
                         return callback(false, {
                             msg: "Something went wrong please try again later",
                             error: insertError
@@ -168,6 +166,7 @@ updateUser = (req, callback) => {
 
 
 updateUserPassword = (data, callback) => {
+
     encryptPack.decryptPassword({
         password: data.oldPassword,
         hash: data.userData.password
@@ -190,7 +189,7 @@ updateUserPassword = (data, callback) => {
                     } else {
                         sequelize
                             .query(
-                                "UPDATE user SET password = :password  Where user.id_user = :id_user", {
+                                "UPDATE user SET password = :newPassword  Where user.id_user = :id_user", {
                                     replacements: {
                                         id_user: data.userData.id_user,
                                         newPassword: encryptResult,
@@ -201,10 +200,10 @@ updateUserPassword = (data, callback) => {
                             )
                             .then(data => {
                                 return callback(true, {
-                                    data: data,
+                                    data: data[0],
                                     msg: "User password updated successfully.",
                                     error: null,
-                                    respCode: 200,
+                                    respCode: 201,
                                 })
                             })
                             .catch(error => {

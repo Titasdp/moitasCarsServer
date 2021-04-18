@@ -37,7 +37,7 @@ addBrand = (req, callback) => {
         });
 };
 
-updateBrandDesign = (req, callback) => {
+updateBrand = (req, callback) => {
     sequelize
         .query(
             "UPDATE brand SET designation = :designation Where brand.id_brand = :id_brand;", {
@@ -58,7 +58,7 @@ updateBrandDesign = (req, callback) => {
 };
 
 module.exports = {
-    updateBrandDesign,
+    updateBrand,
     getBrands,
     addBrand
 };

@@ -117,32 +117,51 @@ router.patch("/brands", (req, res) => {
 //<User routes
 router.post("/login", (req, res) => {
     userController.getUserByName(req, (success, result) => {
-        if (success == true) {
-            res.status(200).json("ctt");
+        if (success) {
+            userController.userLogin({
+                userData: result[0],
+                password: req.sanitize(req.body.password),
+            }, (upDateSuccess, returnedObj) => {
+                if (upDateSuccess == true) {
+                    res.status(returnedObj.respCode).send({
+                        message: returnedObj.msg,
+                        error: returnedObj.error,
+                        token: returnedObj.token,
+                        username: returnedObj.username,
+                    });
+                } else {
+                    res.status(returnedObj.respCode).send({
+                        message: returnedObj.msg,
+                        error: returnedObj.error,
+                        token: returnedObj.token,
+                        username: returnedObj.username,
+                    });
+                }
+            });
         } else {
-            res.status(202).send({
+            res.status(400).send({
                 data: null,
-                message: "Something went wrong please try again later",
+                message: "The username and password you entered did not match our records.",
                 error: result,
             });
         }
     });
 });
 
-
 router.patch("/users/:id_user/password", (req, res) => {
     userController.getUserById(req, (success, result) => {
         //secondPart
-        if (success == true) {
+        if (success) {
             userController.updateUserPassword({
-                userData: result[0],
+                userData: result[0][0],
                 oldPassword: req.sanitize(req.body.oldPassword),
                 newPassword: req.sanitize(req.body.newPassword)
             }, (upDateSuccess, returnedObj) => {
                 if (upDateSuccess == true) {
-                    res.status(200).send({
-                        data: returnedObj
-
+                    res.status(returnedObj.respCode).send({
+                        data: returnedObj.data,
+                        message: returnedObj.msg,
+                        error: null
                     });
                 } else {
                     res.status(returnedObj.respCode).send({
@@ -179,6 +198,28 @@ router.post("/users", (req, res) => {
         }
     });
 });
+router.post("/users", (req, res) => {
+    userController.addUser(req, (success, result) => {
+        if (success == true) {
+            res.status(201).send({
+                data: result.returnData,
+                message: result.msg,
+                error: null,
+                generatedPassword: result.generatedPassword
+            });
+        } else {
+            res.status(400).send({
+                data: null,
+                message: result.msg,
+                error: result.error,
+            });
+        }
+    });
+});
+
+
+
+
 
 
 

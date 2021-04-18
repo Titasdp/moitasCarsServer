@@ -12,7 +12,11 @@ encryptPassword = (password, callback) => {
 
 
 decryptPassword = async (data, callback) => {
-    await bcrypt.compare(data.password, password.hash, (err, result) => {
+    // console.log(data);
+    // let compare = await bcrypt.compare(data.password, data.hash)
+    // console.log(compare);
+
+    bcrypt.compare(data.password, data.hash, function (err, result) {
         if (err) {
             return callback(true, err)
         } else {

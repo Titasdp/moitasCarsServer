@@ -60,11 +60,6 @@ Car.init({
         allowNull: false,
         unique: true,
     },
-    filed: {
-        type: DataTypes.INTEGER(1),
-        allowNull: false,
-        defaultValue: 0,
-    },
     created_at: {
         type: 'TIMESTAMP',
         defaultValue: sequelize.NOW,
@@ -115,21 +110,21 @@ Car.belongsTo(fuelModel.Fuel, {
     }
 });
 //Country connection
-countryModel.Country.hasMany(Car, {
-    foreignKey: {
-        name: "id_country",
-        allowNull: true,
-        type: DataTypes.STRING,
-    }
-});
-Car.belongsTo(countryModel.Country, {
-    foreignKey: {
-        name: "id_country",
-        allowNull: false,
-        type: DataTypes.STRING,
-    }
-});
-// Engine Connection
+// countryModel.Country.hasMany(Car, {
+//     foreignKey: {
+//         name: "id_country",
+//         allowNull: true,
+//         type: DataTypes.STRING,
+//     }
+// });
+// Car.belongsTo(countryModel.Country, {
+//     foreignKey: {
+//         name: "id_country",
+//         allowNull: false,
+//         type: DataTypes.STRING,
+//     }
+// });
+// // Engine Connection
 engineModel.Engine.hasMany(Car, {
     foreignKey: {
         name: "id_engine_type",
@@ -148,14 +143,14 @@ Car.belongsTo(engineModel.Engine, {
 // Engine Connection
 carModelsModel.CarModel.hasMany(Car, {
     foreignKey: {
-        name: "id_engine_type",
+        name: "id_model",
         allowNull: true,
         type: DataTypes.STRING,
     }
 });
 Car.belongsTo(carModelsModel.CarModel, {
     foreignKey: {
-        name: "id_engine_type",
+        name: "id_model",
         allowNull: true,
         type: DataTypes.STRING,
     }
