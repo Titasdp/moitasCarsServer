@@ -1,7 +1,6 @@
 const carStanderModal = require("../Models/car_model_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
-const Sequelize = require("sequelize");
 
 getModels = (req, callback) => {
     sequelize
@@ -15,8 +14,7 @@ getModels = (req, callback) => {
             return callback(false, error)
         });
 };
-
-addModel = (req, res) => {
+addModel = (req, callback) => {
     sequelize
         .query(
             "INSERT INTO model (id_model, designation, id_brand) VALUES (:stander);", {
@@ -58,7 +56,6 @@ updateModel = (req, callback) => {
             return callback(true, error)
         });
 };
-
 module.exports = {
     getModels,
     addModel,

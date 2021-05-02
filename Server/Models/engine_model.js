@@ -20,6 +20,7 @@ Engine.init({
     horse_power: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        defaultValue: null
     }
 }, {
     sequelize,

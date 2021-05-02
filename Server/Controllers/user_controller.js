@@ -83,20 +83,6 @@ getUserById = (req, callback) => {
         });
 };
 
-
-// getUsers = (req, callback) => {
-//     sequelize
-//         .query("SELECT * FROM user", {
-//             model: userModel.User
-//         })
-//         .then(data => {
-//             return callback(true, data)
-//         })
-//         .catch(error => {
-//             return callback(false, error)
-//         });
-// };
-
 addUser = (req, callback) => {
     if (req.body.name) {
         let generatedPassword = generatePassPack.generateRandomPass()
@@ -163,8 +149,6 @@ updateUser = (req, callback) => {
         });
 };
 
-
-
 updateUserPassword = (data, callback) => {
 
     encryptPack.decryptPassword({
@@ -229,64 +213,10 @@ updateUserPassword = (data, callback) => {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-// fileUser = (req, callback) => {
-//     sequelize
-//         .query(
-//             "UPDATE user SET filed = :val  Where user.id_user = :id_user;", {
-//                 replacements: {
-//                     id_user: req.sanitize(req.params.id_user),
-//                     val: req.sanitize(req.body.val),
-//                 }
-//             }, {
-//                 model: userModel.User
-//             }
-//         )
-//         .then(data => {
-//             return callback(true, data)
-//         })
-//         .catch(error => {
-//             return callback(true, error)
-//         });
-// }
-
-// eliminateUser = (req, callback) => {
-//     sequelize
-//         .query(
-//             "DELETE FROM user Where user.id_user = :id_user;", {
-//                 replacements: {
-//                     id_user: req.sanitize(req.params.id_user),
-//                 }
-//             }, {
-//                 model: userModel.User
-//             }
-//         )
-//         .then(data => {
-//             return callback(true, data)
-//         })
-//         .catch(error => {
-//             return callback(true, error)
-//         });
-// }
-
 module.exports = {
     addUser,
-    // getUsers,
     updateUser,
     getUserById,
-    // fileUser,
-    // eliminateUser,
     updateUserPassword,
     getUserByName,
     userLogin

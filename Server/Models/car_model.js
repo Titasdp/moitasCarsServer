@@ -6,7 +6,6 @@ const sequelize = require("../Database/connection");
 class Car extends Model {}
 
 const fuelModel = require("../Models/fuel_model")
-const countryModel = require("../Models/country_model")
 const engineModel = require("../Models/engine_model")
 const carModelsModel = require("../Models/car_model_model")
 const userModel = require("../Models/user_model")
@@ -124,7 +123,7 @@ Car.belongsTo(fuelModel.Fuel, {
 //         type: DataTypes.STRING,
 //     }
 // });
-// // Engine Connection
+// Engine Connection
 engineModel.Engine.hasMany(Car, {
     foreignKey: {
         name: "id_engine_type",
@@ -140,7 +139,7 @@ Car.belongsTo(engineModel.Engine, {
     }
 });
 
-// Engine Connection
+// Car model Connection
 carModelsModel.CarModel.hasMany(Car, {
     foreignKey: {
         name: "id_model",

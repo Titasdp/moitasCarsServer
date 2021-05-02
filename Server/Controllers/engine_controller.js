@@ -14,6 +14,24 @@ getEngines = (req, callback) => {
             return callback(false, error)
         });
 };
+
+getEngineByName = (description, callback) => {
+    sequelize
+        .query("SELECT * FROM engine where description =:desc", {
+            replacements: {
+                desc: description
+            }
+        }, {
+            model: engineModel.Engine
+        })
+        .then(data => {
+            return callback(true, data)
+        })
+        .catch(error => {
+            return callback(false, error)
+        });
+};
+
 addEngine = (req, callback) => {
     sequelize
         .query(
@@ -36,7 +54,6 @@ addEngine = (req, callback) => {
             return callback(false, error)
         });
 };
-
 updateEngine = (req, callback) => {
     sequelize
         .query(
@@ -58,9 +75,52 @@ updateEngine = (req, callback) => {
         });
 };
 
+initializeEngineModel = async (callback) => {
+    let insertArray = [
+        [uniqueIdPack.generateRandomId('-engine'), 'Indefinido']
+        [uniqueIdPack.generateRandomId('-engine'), 'V4']
+        [uniqueIdPack.generateRandomId('-engine'), 'V6']
+        [uniqueIdPack.generateRandomId('-engine'), 'V8'],
+        [uniqueIdPack.generateRandomId('-engine'), 'V12'],
+        [uniqueIdPack.generateRandomId('-engine'), 'V'],
+    ]
+    await sequelize
+        .query(
+            `INSERT INTO engine (id_engine,designation) VALUES ${insertArray.map(element => '(?)').join(',')};`, {
+                replacements: insertArray
+            }, {
+                model: engineModel.Engine
+            }
+        )
+        .then(data => {
+            let processResp = {
+                processRespCode: 201,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "Data introduced successfully",
+                }
+            }
+            return callback(false, processResp)
+        })
+        .catch(error => {
+            let processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+};
+
 
 module.exports = {
     updateEngine,
     addEngine,
-    getEngines
+    getEngines,
+    initializeEngineModel,
+    getEngineByName
 };

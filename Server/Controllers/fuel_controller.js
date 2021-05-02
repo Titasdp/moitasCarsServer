@@ -14,6 +14,30 @@ getFuels = (req, callback) => {
             return callback(false, error)
         });
 };
+
+
+
+getFuelByName = (description, callback) => {
+    sequelize
+        .query("SELECT * FROM fuel where description =:desc", {
+            replacements: {
+                desc: description
+            }
+        }, {
+            model: fuelTypeModel.Fuel
+        })
+        .then(data => {
+            return callback(true, data)
+        })
+        .catch(error => {
+            return callback(false, error)
+        });
+};
+
+
+
+
+
 addFuel = (req, callback) => {
     sequelize
         .query(
@@ -45,7 +69,7 @@ updateFuel = (req, callback) => {
                     designation: req.sanitize(req.params.designation)
                 }
             }, {
-                model: brandModel.Brand
+                model: fuelTypeModel.Fuel
             }
         )
         .then(data => {
@@ -56,8 +80,58 @@ updateFuel = (req, callback) => {
         });
 };
 
+
+
+initializeFuelModel = async (callback) => {
+    let insertArray = [
+        [uniqueIdPack.generateRandomId('-fuel'), 'Indefinido']
+        [uniqueIdPack.generateRandomId('-fuel'), 'Gasolina'],
+        [uniqueIdPack.generateRandomId('-fuel'), 'Gasóleo'],
+        [uniqueIdPack.generateRandomId('-fuel'), 'Diesel'],
+        [uniqueIdPack.generateRandomId('-fuel'), 'Ethanol'],
+        [uniqueIdPack.generateRandomId('-fuel'), 'Eletricidade'],
+    ]
+    await sequelize
+        .query(
+            `INSERT INTO fuel (id_fuel_type,designation) VALUES ${insertArray.map(element => '(?)').join(',')};`, {
+                replacements: insertArray
+            }, {
+                model: fuelTypeModel.Fuel
+            }
+        )
+        .then(data => {
+            let processResp = {
+                processRespCode: 201,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "Data introduced successfully",
+                }
+            }
+            return callback(false, processResp)
+        })
+        .catch(error => {
+            let processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+};
+
+
+
+
+
+
 module.exports = {
     updateFuel,
     addFuel,
-    getFuels
+    getFuels,
+    initializeFuelModel,
+    getFuelByName
 };

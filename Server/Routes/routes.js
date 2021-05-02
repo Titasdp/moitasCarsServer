@@ -1,8 +1,112 @@
 const express = require("express");
 const router = express.Router(); // router
 const carController = require("../Controllers/car_controller")
+//<Init
 const brandController = require("../Controllers/brand_controller")
+const fuelController = require("../Controllers/fuel_controller")
+const engineController = require("../Controllers/engine_controller")
+//Init>
 const userController = require("../Controllers/user_controller")
+
+//Initialize
+router.post("/init", async (req, res) => {
+    let processResp = {} // return array
+    let successInitArray = []
+    let existArray = []
+    await brandController.getBrandByName("Indefinido", (success, result) => {
+        if (success) {
+            console.log(result.length);
+            if (result.length === 0) {
+                brandController.initializeBrandModel((initSuccess, result) => {
+                    if (initSuccess) {
+                        successInitArray.push(initSuccess)
+                    }
+                });
+            } else {
+                existArray.push(success)
+            }
+        }
+    })
+    // await fuelController.getFuelByName("Indefinido", async (success, result) => {
+    //     if (success) {
+    //         if (result[0].length === 0) {
+    //             await fuelController.initializeFuelModel((initSuccess, result) => {
+    //                 if (initSuccess) {
+    //                     successInitArray.push(initSuccess)
+    //                 }
+    //             });
+    //         } else {
+    //             existArray.push(success)
+    //         }
+    //     }
+    // })
+    // await engineController.getEngineByName("Indefinido", async (success, result) => {
+    //     if (success) {
+    //         if (result[0].length === 0) {
+    //             await engineController.initializeEngineModel((initSuccess, result) => {
+    //                 if (initSuccess) {
+    //                     successInitArray.push(initSuccess)
+    //                 }
+    //             });
+    //         } else {
+    //             existArray.push(success)
+    //         }
+    //     }
+    // });
+    console.log(existArray.length + "li");
+    if (successInitArray.length === 1 && existArray.length === 0) {
+        processResp = {
+            processRespCode: 201,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "All data Created successfully.",
+            }
+        }
+
+    } else if (successInitArray.length === 0 && existArray.length === 1) {
+        processResp = {
+            processRespCode: 200,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "This function can only be called one time after his success",
+            }
+        }
+    } else {
+        processResp = {
+            processRespCode: 500,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Not all data where insert in to the table, something went wrong please try again later.",
+            }
+        }
+    }
+    res.status(processResp.processRespCode).send(processResp.toClient)
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
