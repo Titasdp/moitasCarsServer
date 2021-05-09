@@ -2,7 +2,7 @@ const engineModel = require("../Models/engine_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
 
-getEngines = (req, callback) => {
+fetchEngines = (req, callback) => {
     sequelize
         .query("SELECT * FROM engine", {
             model: engineModel.Engine
@@ -15,32 +15,75 @@ getEngines = (req, callback) => {
         });
 };
 
-getEngineByName = (description, callback) => {
+//*Completed
+fetchEngineByName = (designation, callback) => {
+    let processResp = {}
+    console.log(designation);
     sequelize
-        .query("SELECT * FROM engine where description =:desc", {
+        .query("SELECT * FROM engine where designation =:desc", {
             replacements: {
-                desc: description
+                desc: designation
             }
         }, {
             model: engineModel.Engine
         })
         .then(data => {
-            return callback(true, data)
+            console.log(data[0]);
+
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
 
-addEngine = (req, callback) => {
+//*Completed
+addEngine = (dataObj, callback) => {
+
+    let processResp = {}
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already a brand with that designation, introduced in the system.",
+            }
+        }
+        return callback(true, processResp)
+    }
+
     sequelize
         .query(
             "INSERT INTO engine (id_engine, designation,horse_power) VALUES (:engineType);", {
                 replacements: {
                     engineType: [
-                        req.sanitize(uniqid(undefined, "-engine")),
-                        req.sanitize(req.body.designation),
-                        req.sanitize(req.body.horse_power),
+                        uniqid(undefined, "-engine"),
+                        dataObj.newDesignation,
+                        dataObj.horsePower,
                     ]
                 }
             }, {
@@ -48,42 +91,117 @@ addEngine = (req, callback) => {
             }
         )
         .then(data => {
-            return callback(true, data)
+            processResp = {
+                processRespCode: 201,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "A new engine type was been created successfully.",
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later.",
+                }
+            }
+            return callback(false, processResp)
         });
 };
-updateEngine = (req, callback) => {
+
+//*Completed
+updateEngine = (dataObj, callback) => {
+    let processResp = {}
+
+    if (dataObj.canBeEdited) {
+        processResp = {
+            processRespCode: 405,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "This data cannot be edited.",
+            }
+        }
+        return callback(true, processResp)
+    }
+
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already an engine with that designation, introduced in the system.",
+            }
+        }
+        return callback(true, processResp)
+    }
     sequelize
         .query(
             "UPDATE engine SET designation = :designation , horse_power =:horse_power Where engine.id_engine = :id_engine;", {
                 replacements: {
-                    id_engine: req.sanitize(req.params.id_engine),
-                    designation: req.sanitize(req.body.designation),
-                    horse_power: req.sanitize(req.body.horse_power)
+                    id_engine: dataObj.engineId,
+                    designation: dataObj.newDesignation,
+                    horse_power: dataObj.horsePower
                 }
             }, {
                 model: engineModel.Engine
             }
         )
         .then(data => {
-            return callback(true, data)
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "The brand was updated successfully",
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(true, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(true, processResp)
         });
 };
 
-initializeEngineModel = async (callback) => {
+//*Completed
+initializeEngineModel = async (dataObj, callback) => {
+    if (dataObj.fetchConfirmExist) {
+        let processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Cannot complete the process this function can only be called one time, and it has been already called.",
+            }
+        }
+        return callback(true, processResp)
+    }
+
+
     let insertArray = [
-        [uniqueIdPack.generateRandomId('-engine'), 'Indefinido']
-        [uniqueIdPack.generateRandomId('-engine'), 'V4']
-        [uniqueIdPack.generateRandomId('-engine'), 'V6']
-        [uniqueIdPack.generateRandomId('-engine'), 'V8'],
-        [uniqueIdPack.generateRandomId('-engine'), 'V12'],
-        [uniqueIdPack.generateRandomId('-engine'), 'V'],
+        [uniqid(undefined, '-engine'), 'Indefinido'],
+        [uniqid(undefined, '-engine'), 'V4'],
+        [uniqid(undefined, '-engine'), 'V6'],
+        [uniqid(undefined, '-engine'), 'V8'],
+        [uniqid(undefined, '-engine'), 'V12'],
+        [uniqid(undefined, '-engine'), 'V'],
     ]
+
     await sequelize
         .query(
             `INSERT INTO engine (id_engine,designation) VALUES ${insertArray.map(element => '(?)').join(',')};`, {
@@ -98,7 +216,7 @@ initializeEngineModel = async (callback) => {
                 toClient: {
                     processResult: data,
                     processError: null,
-                    processMsg: "Data introduced successfully",
+                    processMsg: "Data introduced successfully.",
                 }
             }
             return callback(false, processResp)
@@ -120,7 +238,7 @@ initializeEngineModel = async (callback) => {
 module.exports = {
     updateEngine,
     addEngine,
-    getEngines,
+    fetchEngines,
     initializeEngineModel,
-    getEngineByName
+    fetchEngineByName
 };

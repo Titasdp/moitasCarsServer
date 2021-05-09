@@ -8,38 +8,28 @@ const engineController = require("../Controllers/engine_controller")
 //Init>
 const userController = require("../Controllers/user_controller")
 
+/**
+ * Todo: SEPARATE ALL INIT ROUTES FOR BETTER FUNCTIONALITY 
+ */
+//!<Brands
 //Initialize
-router.post("/init", async (req, res) => {
-    let processResp = {} // return array
-    let successInitArray = []
-    let existArray = []
-    await brandController.getBrandByName("Indefinido", (success, result) => {
-        if (success) {
-            console.log(result.length);
-            if (result.length === 0) {
-                brandController.initializeBrandModel((initSuccess, result) => {
-                    if (initSuccess) {
-                        successInitArray.push(initSuccess)
-                    }
-                });
-            } else {
-                existArray.push(success)
+router.post("/init/brands", async (req, res) => {
+    let fetchConfirmExist = false
+    brandController.fetchBrandByName("Indefinido", (fetchBrandSuccess, fetchBrandResult) => {
+        if (fetchBrandSuccess) {
+            if (fetchBrandResult.processRespCode === 200) {
+                fetchConfirmExist = true
             }
+            brandController.initializeBrandModel({
+                fetchConfirmExist: fetchConfirmExist
+            }, (initSuccess, initBrandResult) => {
+                res.status(initBrandResult.processRespCode).send(initBrandResult.toClient)
+            });
+        } else {
+            res.status(fetchBrandResult.processRespCode).send(initBrandResult.toClient)
         }
     })
-    // await fuelController.getFuelByName("Indefinido", async (success, result) => {
-    //     if (success) {
-    //         if (result[0].length === 0) {
-    //             await fuelController.initializeFuelModel((initSuccess, result) => {
-    //                 if (initSuccess) {
-    //                     successInitArray.push(initSuccess)
-    //                 }
-    //             });
-    //         } else {
-    //             existArray.push(success)
-    //         }
-    //     }
-    // })
+
     // await engineController.getEngineByName("Indefinido", async (success, result) => {
     //     if (success) {
     //         if (result[0].length === 0) {
@@ -53,38 +43,188 @@ router.post("/init", async (req, res) => {
     //         }
     //     }
     // });
-    console.log(existArray.length + "li");
-    if (successInitArray.length === 1 && existArray.length === 0) {
-        processResp = {
-            processRespCode: 201,
-            toClient: {
-                processResult: null,
-                processError: null,
-                processMsg: "All data Created successfully.",
-            }
-        }
+    // console.log(existArray.length + "li");
+    // if (successInitArray.length === 1 && existArray.length === 0) {
+    //     processResp = {
+    //         processRespCode: 201,
+    //         toClient: {
+    //             processResult: null,
+    //             processError: null,
+    //             processMsg: "All data Created successfully.",
+    //         }
+    //     }
 
-    } else if (successInitArray.length === 0 && existArray.length === 1) {
-        processResp = {
-            processRespCode: 200,
-            toClient: {
-                processResult: null,
-                processError: null,
-                processMsg: "This function can only be called one time after his success",
-            }
-        }
-    } else {
-        processResp = {
-            processRespCode: 500,
-            toClient: {
-                processResult: null,
-                processError: null,
-                processMsg: "Not all data where insert in to the table, something went wrong please try again later.",
-            }
-        }
-    }
-    res.status(processResp.processRespCode).send(processResp.toClient)
+    // } else if (successInitArray.length === 0 && existArray.length === 1) {
+    //     processResp = {
+    //         processRespCode: 200,
+    //         toClient: {
+    //             processResult: null,
+    //             processError: null,
+    //             processMsg: "This function can only be called one time after his success",
+    //         }
+    //     }
+    // } else {
+    //     processResp = {
+    //         processRespCode: 500,
+    //         toClient: {
+    //             processResult: null,
+    //             processError: null,
+    //             processMsg: "Not all data where insert in to the table, something went wrong please try again later.",
+    //         }
+    //     }
+    // }
+    // res.status(processResp.processRespCode).send(processResp.toClient)
 })
+
+
+//AddBrand
+router.post("/brands", async (req, res) => {
+    let fetchConfirmExist = false
+    brandController.fetchBrandByName(req.sanitize(req.body.designation), (fetchBrandSuccess, fetchBrandResult) => {
+        if (fetchBrandSuccess) {
+            if (fetchBrandResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            brandController.addBrand({
+                fetchConfirmExist: fetchConfirmExist,
+                newDesignation: req.sanitize(req.body.designation)
+            }, (addBrandSuccess, addBrandResult) => {
+                res.status(addBrandResult.processRespCode).send(addBrandResult.toClient)
+            });
+        } else {
+            res.status(fetchBrandResult.processRespCode).send(fetchBrandResult.toClient)
+        }
+    })
+})
+
+//UpdateBrand
+router.patch("/brands/:id/designation", async (req, res) => {
+    let fetchConfirmExist = false
+    brandController.fetchBrandByName(req.sanitize(req.body.designation), (fetchBrandSuccess, fetchBrandResult) => {
+        if (fetchBrandSuccess) {
+            if (fetchBrandResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            brandController.updateBrand({
+                fetchConfirmExist: fetchConfirmExist,
+                newDesignation: req.sanitize(req.body.designation),
+                brandId: req.sanitize(req.params.id),
+            }, (updateBrandSuccess, updateBrandResult) => {
+                res.status(updateBrandResult.processRespCode).send(updateBrandResult.toClient)
+            });
+        } else {
+            res.status(fetchBrandResult.processRespCode).send(fetchBrandResult.toClient)
+        }
+    })
+})
+//!Brands>
+
+
+
+
+//!<Brands
+//Initialize
+router.post("/init/engines", async (req, res) => {
+    let fetchConfirmExist = false
+    engineController.fetchEngineByName("Indefinido", (fetchEngineSuccess, fetchEngineResult) => {
+        if (fetchEngineSuccess) {
+            if (fetchEngineResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            engineController.initializeEngineModel({
+                fetchConfirmExist: fetchConfirmExist
+            }, (initSuccess, initEngineResult) => {
+                res.status(initEngineResult.processRespCode).send(initEngineResult.toClient)
+            });
+        } else {
+            res.status(fetchEngineResult.processRespCode).send(fetchEngineResult.toClient)
+        }
+    })
+
+})
+
+
+//AddBrand
+router.post("/engines", async (req, res) => {
+    let fetchConfirmExist = false
+    engineController.fetchEngineByName(req.sanitize(req.body.designation), (fetchEngineSuccess, fetchEngineResult) => {
+        if (fetchEngineSuccess) {
+            if (fetchEngineResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            engineController.addEngine({
+                fetchConfirmExist: fetchConfirmExist,
+                newDesignation: req.sanitize(req.body.designation),
+                horsePower: req.sanitize(req.body.horsePower),
+            }, (addEngineSuccess, addEngineResult) => {
+                res.status(addEngineResult.processRespCode).send(addEngineResult.toClient)
+            });
+        } else {
+            res.status(fetchEngineResult.processRespCode).send(fetchEngineResult.toClient)
+        }
+    })
+})
+
+//UpdateBrand
+router.put("/engines/:id/designation", (req, res) => {
+    let fetchConfirmExist = false
+    let canBeEdited = true
+    engineController.fetchEngineByName(req.sanitize(req.body.designation), (fetchEngineSuccess, fetchEngineResult) => {
+        if (fetchEngineSuccess) {
+            if (fetchEngineResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            console.log(fetchEngineSuccess.toClient);
+
+            // if (fetchEngineSuccess.toClient.processResult[0].description === "Indefinido") {
+            //     canBeEdited = false
+            // }
+            // engineController.updateEngine({
+            //     fetchConfirmExist: fetchConfirmExist,
+            //     canBeEdited: canBeEdited,
+            //     newDesignation: req.sanitize(req.body.designation),
+            //     horsePower: req.sanitize(req.body.horsePower),
+            //     engineId: req.sanitize(req.params.id)
+
+            // }, (updateEngineSuccess, updateEngineResult) => {
+            //     res.status(updateEngineResult.processRespCode).send(updateEngineResult.toClient)
+            // });
+        } else {
+            res.status(fetchEngineResult.processRespCode).send(fetchEngineResult.toClient)
+        }
+    })
+})
+//!Brands>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// router.post("init/fuel", (req, res) => {
+//     await fuelController.getFuelByName("Indefinido", async (success, result) => {
+//         if (success) {
+//             if (result[0].length === 0) {
+//                 await fuelController.initializeFuelModel((initSuccess, result) => {
+//                     if (initSuccess) {
+//                         successInitArray.push(initSuccess)
+//                     }
+//                 });
+//             } else {
+//                 existArray.push(success)
+//             }
+//         }
+//     })
+// })
 
 
 

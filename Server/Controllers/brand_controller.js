@@ -2,19 +2,48 @@ const brandModel = require("../Models/brand_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
 
-getBrands = (req, callback) => {
+fetchBrands = (req, callback) => {
+    let processResp = {}
     sequelize
         .query("SELECT * FROM brand", {
             model: brandModel.Brand
         })
         .then(data => {
-            return callback(true, data)
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
-getBrandByName = (designation, callback) => {
+
+// *Completed
+fetchBrandByName = (designation, callback) => {
+    console.log("designation " + designation);
+    let processResp = {}
     sequelize
         .query("SELECT * FROM brand where designation =:desc", {
             replacements: {
@@ -24,20 +53,58 @@ getBrandByName = (designation, callback) => {
             model: brandModel.Brand
         })
         .then(data => {
-            return callback(true, data[0])
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
-addBrand = (req, callback) => {
+
+// *Completed    
+addBrand = (dataObj, callback) => {
+    let processResp = {}
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already a brand with that designation, introduced in the system.",
+            }
+        }
+        return callback(true, processResp)
+    }
     sequelize
         .query(
             "INSERT INTO brand (id_brand, designation) VALUES (:brand);", {
                 replacements: {
                     brand: [
-                        req.sanitize(uniqid(undefined, "-brand")),
-                        req.sanitize(req.body.designation),
+                        uniqid(undefined, "-brand"),
+                        dataObj.newDesignation,
                     ]
                 }
             }, {
@@ -45,36 +112,95 @@ addBrand = (req, callback) => {
             }
         )
         .then(data => {
-            return callback(true, data)
+            processResp = {
+                processRespCode: 201,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "A new brand was been created successfully.",
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later.",
+                }
+            }
+            return callback(false, processResp)
         });
 };
 
-updateBrand = (req, callback) => {
+// *Completed
+updateBrand = (dataObj, callback) => {
+    let processResp = {}
+
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already a brand with that designation, introduced in the system.",
+            }
+        }
+        return callback(true, processResp)
+    }
+
     sequelize
         .query(
             "UPDATE brand SET designation = :designation Where brand.id_brand = :id_brand;", {
                 replacements: {
-                    id_brand: req.sanitize(req.params.id_brand),
-                    designation: req.sanitize(req.params.designation)
+                    id_brand: dataObj.brandId,
+                    designation: dataObj.newDesignation,
                 }
             }, {
                 model: brandModel.Brand
             }
         )
         .then(data => {
-            return callback(true, data)
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "The brand was updated successfully",
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(true, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(true, processResp)
         });
 };
 
+// *Completed
+initializeBrandModel = async (dataObj, callback) => {
+    if (dataObj.fetchConfirmExist) {
+        let processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Cannot complete the process this function can only be called one time, and it has been already called.",
+            }
+        }
+        return callback(true, processResp)
+    }
 
-initializeBrandModel = async (callback) => {
-    console.log("here2");
     let insertArray = [
         [uniqid(undefined, "-brand"), 'Indefinido'],
         [uniqid(undefined, "-brand"), 'Tesla'],
@@ -139,10 +265,10 @@ initializeBrandModel = async (callback) => {
                 toClient: {
                     processResult: data,
                     processError: null,
-                    processMsg: "Data introduced successfully",
+                    processMsg: "Data introduced successfully.",
                 }
             }
-            return callback(false, processResp)
+            return callback(true, processResp)
         })
         .catch(error => {
             console.log(error);
@@ -161,8 +287,8 @@ initializeBrandModel = async (callback) => {
 
 module.exports = {
     updateBrand,
-    getBrands,
+    fetchBrands,
     addBrand,
     initializeBrandModel,
-    getBrandByName,
+    fetchBrandByName,
 };
