@@ -6,10 +6,11 @@ const brandController = require("../Controllers/brand_controller")
 const fuelController = require("../Controllers/fuel_controller")
 const engineController = require("../Controllers/engine_controller")
 //Init>
+const carModelController = require("../Controllers/car_model_controller")
 const userController = require("../Controllers/user_controller")
 
 /**
- * Todo: SEPARATE ALL INIT ROUTES FOR BETTER FUNCTIONALITY 
+ * Todo: 
  */
 //!<Brands
 //Initialize
@@ -76,7 +77,6 @@ router.post("/init/brands", async (req, res) => {
     // res.status(processResp.processRespCode).send(processResp.toClient)
 })
 
-
 //AddBrand
 router.post("/brands", async (req, res) => {
     let fetchConfirmExist = false
@@ -119,10 +119,7 @@ router.patch("/brands/:id/designation", async (req, res) => {
 })
 //!Brands>
 
-
-
-
-//!<Brands
+//!<Engines
 //Initialize
 router.post("/init/engines", async (req, res) => {
     let fetchConfirmExist = false
@@ -143,7 +140,6 @@ router.post("/init/engines", async (req, res) => {
 
 })
 
-
 //AddBrand
 router.post("/engines", async (req, res) => {
     let fetchConfirmExist = false
@@ -155,7 +151,7 @@ router.post("/engines", async (req, res) => {
             engineController.addEngine({
                 fetchConfirmExist: fetchConfirmExist,
                 newDesignation: req.sanitize(req.body.designation),
-                horsePower: req.sanitize(req.body.horsePower),
+                horsePower: req.sanitize(req.body.horsePower) ? req.sanitize(req.body.horsePower) : null,
             }, (addEngineSuccess, addEngineResult) => {
                 res.status(addEngineResult.processRespCode).send(addEngineResult.toClient)
             });
@@ -166,7 +162,8 @@ router.post("/engines", async (req, res) => {
 })
 
 //UpdateBrand
-router.put("/engines/:id/designation", (req, res) => {
+router.put("/engines/:id", (req, res) => {
+
     let fetchConfirmExist = false
     let canBeEdited = true
     engineController.fetchEngineByName(req.sanitize(req.body.designation), (fetchEngineSuccess, fetchEngineResult) => {
@@ -174,29 +171,131 @@ router.put("/engines/:id/designation", (req, res) => {
             if (fetchEngineResult.processRespCode === 200) {
                 fetchConfirmExist = true
             }
-            console.log(fetchEngineSuccess.toClient);
-
-            // if (fetchEngineSuccess.toClient.processResult[0].description === "Indefinido") {
-            //     canBeEdited = false
-            // }
-            // engineController.updateEngine({
-            //     fetchConfirmExist: fetchConfirmExist,
-            //     canBeEdited: canBeEdited,
-            //     newDesignation: req.sanitize(req.body.designation),
-            //     horsePower: req.sanitize(req.body.horsePower),
-            //     engineId: req.sanitize(req.params.id)
-
-            // }, (updateEngineSuccess, updateEngineResult) => {
-            //     res.status(updateEngineResult.processRespCode).send(updateEngineResult.toClient)
-            // });
+            engineController.fetchEngineById(req.sanitize(req.params.id), (fetchEngineByIdSuccess, fetchEngineByIdResult) => {
+                if (fetchEngineByIdSuccess) {
+                    if (fetchEngineByIdResult.processRespCode !== 200) {
+                        if (fetchEngineByIdResult.toClient.processResult[0].description === "Indefinido") {
+                            canBeEdited = false
+                        }
+                    }
+                    engineController.updateEngine({
+                        fetchConfirmExist: fetchConfirmExist,
+                        canBeEdited: canBeEdited,
+                        newDesignation: req.sanitize(req.body.designation),
+                        horsePower: req.sanitize(req.body.horsePower) ? req.sanitize(req.body.horsePower) : null,
+                        engineId: req.sanitize(req.params.id)
+                    }, (updateEngineSuccess, updateEngineResult) => {
+                        res.status(updateEngineResult.processRespCode).send(updateEngineResult.toClient)
+                    });
+                } else {
+                    res.status(fetchEngineByIdResult.processRespCode).send(fetchEngineByIdResult.toClient)
+                }
+            })
         } else {
             res.status(fetchEngineResult.processRespCode).send(fetchEngineResult.toClient)
         }
     })
 })
-//!Brands>
+//!Engines>
+
+//!<Fuels
+//Initialize
+router.post("/init/fuels", async (req, res) => {
+    let fetchConfirmExist = false
+    fuelController.fetchFuelByName("Indefinido", (fetchFuelSuccess, fetchFuelResult) => {
+        if (fetchFuelSuccess) {
+            if (fetchFuelResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            fuelController.initializeFuelModel({
+                fetchConfirmExist: fetchConfirmExist
+            }, (initSuccess, initFuelResult) => {
+                res.status(initFuelResult.processRespCode).send(initFuelResult.toClient)
+            });
+        } else {
+            res.status(fetchFuelResult.processRespCode).send(fetchFuelResult.toClient)
+        }
+    })
+
+})
+
+//AddBrand
+router.post("/fuels", async (req, res) => {
+    let fetchConfirmExist = false
+    fuelController.fetchEngineByName(req.sanitize(req.body.designation), (fetchFuelSuccess, fetchFuelResult) => {
+        if (fetchFuelSuccess) {
+            if (fetchFuelResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            fuelController.addFuel({
+                fetchConfirmExist: fetchConfirmExist,
+                newDesignation: req.sanitize(req.body.designation),
+            }, (addFuelSuccess, addFuelResult) => {
+                res.status(addFuelResult.processRespCode).send(addFuelResult.toClient)
+            });
+        } else {
+            res.status(fetchFuelResult.processRespCode).send(fetchFuelResult.toClient)
+        }
+    })
+})
+
+//UpdateBrand
+router.patch("/fuel/:id/designation", (req, res) => {
+    let fetchConfirmExist = false
+    let canBeEdited = true
+    fuelController.fetchFuelByName(req.sanitize(req.body.designation), (fetchFuelSuccess, fetchFuelResult) => {
+        if (fetchFuelSuccess) {
+            if (fetchFuelResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            fuelController.fetchFuelById(req.sanitize(req.params.id), (fetchFuelByIdSuccess, fetchFuelByIdResult) => {
+                if (fetchFuelByIdSuccess) {
+                    if (fetchFuelByIdResult.processRespCode !== 200) {
+                        if (fetchFuelByIdResult.toClient.processResult[0].description === "Indefinido") {
+                            canBeEdited = false
+                        }
+                    }
+                    fuelController.updateFuel({
+                        fetchConfirmExist: fetchConfirmExist,
+                        canBeEdited: canBeEdited,
+                        newDesignation: req.sanitize(req.body.designation),
+                        idFuelType: req.sanitize(req.params.id)
+                    }, (updateFuelSuccess, updateFuelResult) => {
+                        res.status(updateFuelResult.processRespCode).send(updateFuelResult.toClient)
+                    });
+                } else {
+                    res.status(fetchFuelByIdResult.processRespCode).send(fetchFuelByIdResult.toClient)
+                }
+            })
+        } else {
+            res.status(fetchFuelResult.processRespCode).send(fetchFuelResult.toClient)
+        }
+    })
+})
+//!Fuels>
 
 
+//!<Models
+router.post("/models", async (req, res) => {
+    let fetchConfirmExist = false
+    carModelController.fetchModelByName(req.sanitize(req.body.designation), (fetchModelSuccess, fetchModelResult) => {
+        if (fetchModelSuccess) {
+            if (fetchModelResult.processRespCode === 200) {
+                fetchConfirmExist = true
+            }
+            carModelController.addModel({
+                fetchConfirmExist: fetchConfirmExist,
+                newDesignation: req.sanitize(req.body.designation),
+                idBrand: req.sanitize(req.body.idBrand)
+            }, (addModelSuccess, addModelResult) => {
+                res.status(addModelResult.processRespCode).send(addModelResult.toClient)
+            });
+        } else {
+            res.status(fetchModelResult.processRespCode).send(fetchModelResult.toClient)
+        }
+    })
+})
+//!Models>
 
 
 

@@ -2,23 +2,93 @@ const engineModel = require("../Models/engine_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
 
+//*Completed
 fetchEngines = (req, callback) => {
+    let processResp = {}
     sequelize
         .query("SELECT * FROM engine", {
             model: engineModel.Engine
         })
         .then(data => {
-            return callback(true, data)
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
+
+// *Completed 
+fetchEngineById = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM engine where id_engine =:id_engine", {
+            replacements: {
+                id_engine: id
+            }
+        }, {
+            model: engineModel.Engine
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+
+
+}
 
 //*Completed
 fetchEngineByName = (designation, callback) => {
     let processResp = {}
-    console.log(designation);
+
     sequelize
         .query("SELECT * FROM engine where designation =:desc", {
             replacements: {
@@ -28,8 +98,6 @@ fetchEngineByName = (designation, callback) => {
             model: engineModel.Engine
         })
         .then(data => {
-            console.log(data[0]);
-
             let respCode = 200
             let respMsg = "Data fetched successfully."
             if (data[0].length === 0) {
@@ -118,7 +186,7 @@ addEngine = (dataObj, callback) => {
 updateEngine = (dataObj, callback) => {
     let processResp = {}
 
-    if (dataObj.canBeEdited) {
+    if (!dataObj.canBeEdited) {
         processResp = {
             processRespCode: 405,
             toClient: {
@@ -157,7 +225,7 @@ updateEngine = (dataObj, callback) => {
             processResp = {
                 processRespCode: 200,
                 toClient: {
-                    processResult: data,
+                    processResult: data[0],
                     processError: null,
                     processMsg: "The brand was updated successfully",
                 }
@@ -240,5 +308,6 @@ module.exports = {
     addEngine,
     fetchEngines,
     initializeEngineModel,
-    fetchEngineByName
+    fetchEngineByName,
+    fetchEngineById
 };
