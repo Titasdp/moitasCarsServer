@@ -6,6 +6,7 @@ const port = process.env.PORT || 3000;
 const router = require("../Server/Routes/routes");
 const sequelize = require("../Server/Database/connection.js");
 const expressSanitizer = require("express-sanitizer");
+const fileUploader = require('express-fileupload');
 
 app.use(bodyParser.json());
 app.use(
@@ -13,6 +14,7 @@ app.use(
         extended: false
     })
 );
+app.use(fileUploader())
 app.use(expressSanitizer());
 app.use(router);
 

@@ -67,26 +67,42 @@ clientGetCars = (req, res) => {
 };
 
 
-addCar = (req, callback) => {
+addCar = (dataObj, callback) => {
+
+    let processResp = {}
+
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already a brand with that designation, introduced in the system.",
+            }
+        }
+        return callback(true, processResp)
+    }
+
+
     sequelize
         .query(
             "INSERT INTO car (id_car, reg_plate, description, img_url, price, mileage, top_speed, production_date, facebook_url, custoJusto_url, id_fuel_type, id_engine_type, id_model) VALUES (:newCar);", {
                 replacements: {
                     newCar: [
-                        req.sanitize(uniqid(undefined, "-car")),
-                        req.sanitize(req.body.reg_plate),
-                        req.sanitize(req.body.description),
-                        req.sanitize(req.body.img_url),
-                        req.sanitize(req.body.price),
-                        req.sanitize(req.body.mileage),
-                        req.sanitize(req.body.top_speed),
-                        req.sanitize(req.body.production_date),
-                        req.sanitize(req.body.facebook_url),
-                        req.sanitize(req.body.custoJusto_url),
-                        req.sanitize(req.body.publisher_id),
-                        req.sanitize(req.body.id_fuel_type),
-                        req.sanitize(req.body.carModel),
-                        req.sanitize(req.body.id_model),
+                        uniqid(undefined, "-car"),
+                        dataObj.reg_plate,
+                        dataObj.description,
+                        dataObj.imgPath,
+                        dataObj.price,
+                        dataObj.mileage,
+                        dataObj.top_speed,
+                        dataObj.production_date,
+                        dataObj.facebook_url,
+                        dataObj.custoJustoUrl,
+                        dataObj.publisher_id,
+                        dataObj.id_fuel_type,
+                        dataObj.carModel,
+                        dataObj.id_model,
                     ]
                 }
             }, {
@@ -94,10 +110,26 @@ addCar = (req, callback) => {
             }
         )
         .then(data => {
-            return callback(true, data)
+            processResp = {
+                processRespCode: 201,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "A new car has been created successfully.",
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later.",
+                }
+            }
+            return callback(false, processResp)
         });
 };
 
@@ -109,5 +141,6 @@ addCar = (req, callback) => {
 
 
 module.exports = {
-    clientGetCars
+    clientGetCars,
+    addCar
 };

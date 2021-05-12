@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router(); // router
 const carController = require("../Controllers/car_controller")
+
+//<Middleware
+const fileUploader = require("../Middleware/fileUpload")
+//Middleware>
+
 //<Init
 const brandController = require("../Controllers/brand_controller")
 const fuelController = require("../Controllers/fuel_controller")
@@ -296,6 +301,28 @@ router.post("/models", async (req, res) => {
     })
 })
 //!Models>
+
+
+
+
+
+//!<Cars
+router.get("/cars", async (req, res) => {
+    let fetchConfirmExist = false
+    // console.log(req.files.img);
+
+
+    fileUploader.fileGetter({
+        req: req
+    }, (fetchModelSuccess, fetchModelResult) => {
+        res.seatHeader(fetchModelResult.processRespCode, {
+            'Content-Type': 'image/jpeg'
+        })
+        res.send(fetchModelResult.toClient)
+
+    })
+})
+//!Cars>
 
 
 
