@@ -25,8 +25,10 @@
     "express-fileupload": "^1.2.1",
     "express-sanitizer": "^1.0.5",
     "fs": "0.0.1-security",
+    "image-type": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
     "mysql2": "^2.2.5",
+    "read-chunk": "^3.2.0",
     "secure-random-password": "^0.2.2",
     "sequelize": "^6.5.0",
     "uniqid": "^5.3.0"

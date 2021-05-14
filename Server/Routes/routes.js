@@ -307,22 +307,51 @@ router.post("/models", async (req, res) => {
 
 
 //!<Cars
-router.get("/cars", async (req, res) => {
-    let fetchConfirmExist = false
-    // console.log(req.files.img);
+router.post("/cars", async (req, res) => {
+
+    if (condition) {
+
+    }
 
 
-    fileUploader.fileGetter({
-        req: req
-    }, (fetchModelSuccess, fetchModelResult) => {
-        res.seatHeader(fetchModelResult.processRespCode, {
-            'Content-Type': 'image/jpeg'
-        })
-        res.send(fetchModelResult.toClient)
 
+
+
+    await carController.confirmExistence({
+        regPlate: req.sanitize(req.body.regPlate),
+        facebookUrl: req.sanitize(req.body.facebookUrl),
+        custoJustoUrl: req.sanitize(req.body.custoJustoUrl)
+    }, (confirmSuccess, confirmResult) => {
+
+        if (confirmSuccess) {
+            await carController.addCar({}, (addSuccess, addResponse) => {
+
+
+            })
+        }
+        res.status(confirmResult.processRespCode).send(confirmResult.toClient)
     })
+
+
+
+
+
+    // await fileUploader.fileUpload({
+
 })
 //!Cars>
+
+
+//     req: req
+// }, (uploadSuccess, uploadResult) => {
+
+//     if (uploadSuccess) {
+
+
+
+//     }
+//     res.status(uploadResult.processRespCode).send(uploadResult.toClient)
+// })
 
 
 
