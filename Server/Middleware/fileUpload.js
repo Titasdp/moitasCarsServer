@@ -161,13 +161,11 @@ fileDelete = (dataObj, callback) => {
     });
 }
 //getter file 
-fileGetter = async (dataObj, callback) => {
-    let imgPath = process.cwd() + `/Server/images/adlisa.jpg`;
-    let uploadPath;
+fileGetter = (dataObj, callback) => {
     let processResp = {}
 
 
-    await checkFileExistence(imgPath, (exist) => {
+    checkFileExistence(dataObj.path, (exist) => {
         if (!exist) {
             processResp = {
                 processRespCode: 409,
@@ -179,9 +177,10 @@ fileGetter = async (dataObj, callback) => {
             }
             return callback(false, processResp)
         }
-        fs.readFile(imgPath, function (err, data) {
-            console.log(err);
+        fs.readFile(dataObj.path, function (err, data) {
+            let functionSuccess = false
             if (err) {
+                console.log(err);
                 processResp = {
                     processRespCode: 500,
                     toClient: {
@@ -191,16 +190,17 @@ fileGetter = async (dataObj, callback) => {
                     }
                 }
             } else {
+                functionSuccess = true
                 processResp = {
                     processRespCode: 200,
                     toClient: {
-                        processResult: data,
+                        processResult: true ? data : new Buffer(data).toString('base64'),
                         processError: null,
                         processMsg: "The file was successfully fetched.",
                     }
                 }
             }
-            return callback(false, processResp)
+            return callback(functionSuccess, processResp)
         });
 
     })
@@ -208,6 +208,38 @@ fileGetter = async (dataObj, callback) => {
 
 
 
+fileExtermination = (dataObj, callback) => {
+
+    let processResp = {}
+
+    fs.unlink(dataObj.path, function (err) {
+
+        let callbackSuccess = false
+
+        if (err) {
+            console.log(err);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please ty again later.",
+                }
+            }
+        } else {
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "The file was successfully deleted.",
+                }
+            }
+            callbackSuccess = true
+        }
+        return callback(callbackSuccess, processResp)
+    });
+}
 
 checkFileExistence = async (imgPath, callback) => {
     await fs.access(imgPath, (err, data) => {

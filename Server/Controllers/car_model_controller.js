@@ -139,7 +139,7 @@ fetchModelByName = (designation, callback) => {
         });
 };
 
-//Todo
+//*Completed
 updateModel = (dataObj, callback) => {
     sequelize
         .query(
@@ -176,9 +176,113 @@ updateModel = (dataObj, callback) => {
             return callback(false, processResp)
         });
 };
+
+//*Completed
+deleteModel = (dataObj, callback) => {
+    let processResp = {}
+    if (!dataObj.canContinue) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is still cars associated to this model.",
+            }
+        }
+
+    }
+
+    sequelize
+        .query(
+            `DELETE  FROM model  WHERE id_model = :id_model`, {
+                replacements: {
+                    id_model: dataObj.req.sanitize(dataObj.req.params.id),
+                }
+            }, {
+                model: carStanderModal.CarModel
+            }
+        )
+        .then(data => {
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "The model was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                }
+            }
+
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
+        });
+}
+
+
+
+
+//Other controller aid
+// *Completed
+fetchCarModelByBrandId = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM model where id_brand =:id_brand", {
+            replacements: {
+                id_brand: id
+            }
+        }, {
+            model: carModel.Car
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+
+
+}
+
+
+
 module.exports = {
     fetchModels,
     addModel,
     updateModel,
     fetchModelByName,
+    deleteModel,
+    fetchCarModelByBrandId
 };

@@ -13,10 +13,13 @@ Testimonial.init({
         primaryKey: true,
         unique: true
     },
+    person_name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     testimonial_text: {
         type: DataTypes.TEXT,
         allowNull: false,
-        unique: true,
     },
     created_at: {
         type: 'TIMESTAMP',
@@ -40,14 +43,14 @@ Testimonial.init({
 // User Connection
 userModel.User.hasMany(Testimonial, {
     foreignKey: {
-        name: "id_brand",
+        name: "id_user",
         allowNull: false,
         type: DataTypes.STRING,
     }
 });
 Testimonial.belongsTo(userModel.User, {
     foreignKey: {
-        name: "id_brand",
+        name: "id_user",
         allowNull: false,
         type: DataTypes.STRING,
     }

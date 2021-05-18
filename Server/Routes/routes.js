@@ -369,6 +369,7 @@ router.patch("/cars/:id/image", async (req, res) => {
     })
 })
 
+// Todo 
 router.get("/cars", async (req, res) => {
     await carController.fetchCars({
         isAdmin: false
@@ -379,12 +380,12 @@ router.get("/cars", async (req, res) => {
         }
 
 
-        console.log(fetchResponse.toClient.processResult);
-        // carController.fetchCarsImgByPath({
-        //     cars: fetchResponse.toClient.processResult
-        // }, (fetchImgSuccess, fetchImgResponse) => {
-        //     res.status(fetchImgResponse.processRespCode).send(fetchImgResponse.toClient)
-        // })
+        // console.log(fetchResponse.toClient.processResult);
+        carController.fetchCarsImgByPath({
+            cars: fetchResponse.toClient.processResult
+        }, (fetchImgSuccess, fetchImgResponse) => {
+            res.status(fetchImgResponse.processRespCode).json(fetchImgResponse.toClient)
+        })
 
     })
 })

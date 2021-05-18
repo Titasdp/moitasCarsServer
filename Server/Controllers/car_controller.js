@@ -1,46 +1,52 @@
 const carModel = require("../Models/car_model")
 const sequelize = require("../Database/connection")
-// const fuelModel = require("../Models/fuel_model")
-// const engineModel = require("../Models/engine_model")
-// const carModelModel = require("../Models/car_model_model")
-// const brandModel = require("../Models/brand_model")
 
 const fileManager = require("../Middleware/fileUpload")
 const uniqid = require('uniqid');
 
-
+//*competed
 fetchCarsImgByPath = async (dataObj, callback) => {
-
+    let carArray = []
+    let canReturn = 0;
+    carArray = dataObj.cars
     let processResp = {}
-    for (const car of dataObj.cars) {
-        await fileManager.fileGetter({
-            path: car.image
-        }, (fetchSuccess, fetchResult) => {
+    console.log(dataObj.cars.length);
+
+
+    for (let i = 0; i < dataObj.cars.length; i++) {
+
+        fileManager.fileGetter({
+            path: dataObj.cars[i].image
+        }, async (fetchSuccess, fetchResult) => {
+            console.log(i);
+
+            let response = await fetchResult
 
             if (!fetchSuccess) {
-                return callback(false, fetchResult)
+                return callback(true, fetchResult)
             }
-            car.image = fetchResult.toClient.processResult
+            dataObj.cars[i].image = fetchResult.toClient.processResult
+
+            canReturn++
+
+
+            if (canReturn === dataObj.cars.length) {
+                console.log(dataObj.cars);
+                processResp = {
+                    processRespCode: 200,
+                    toClient: {
+                        processResult: dataObj.cars,
+                        processError: null,
+                        processMsg: "The file was successfully fetched.",
+                    }
+                }
+                return callback(true, processResp)
+            }
         })
-    }
 
-
-    processResp = {
-        processRespCode: 200,
-        toClient: {
-            processResult: dataObj.cars,
-            processError: error,
-            processMsg: "Something went wrong please try again later.",
-        }
     }
-    return callback(false, processResp)
 }
-
-
-
-
-
-
+//*completed
 fetchCars = (dataObj, callback) => {
     let query = ``
     if (!dataObj.isAdmin) {
@@ -60,27 +66,27 @@ fetchCars = (dataObj, callback) => {
         })
         .then(data => {
             let returnCarArray = []
-            console.log(data[0].dataValues);
 
+            let respCode = 204
+            let respMsg = "Fetch process completed successfully, but there is no content."
+            if (data.length > 0) {
+                respCode = 200
+                respMsg = "Data fetched successfully."
 
-
-
-            let respCode = 200
-            let respMsg = "Data fetched successfully."
-            if (data.length === 0) {
-                respCode = 204
-                respMsg = "Fetch process completed successfully, but there is no content."
+                for (const obj of data) {
+                    returnCarArray.push(obj.dataValues)
+                }
             }
+
             processResp = {
                 processRespCode: respCode,
                 toClient: {
-                    processResult: data[0],
+                    processResult: returnCarArray.length > 0 ? returnCarArray : null,
                     processError: null,
                     processMsg: respMsg,
                 }
             }
-
-            // return callback(true, processResp)
+            return callback(true, processResp)
         })
         .catch(error => {
             console.log(error);
@@ -97,7 +103,7 @@ fetchCars = (dataObj, callback) => {
 };
 
 
-
+//!Sus
 clientGetCars = (req, res) => {
     sequelize
         .query(` SELECT car.id_car, car.reg_plate, car.description, car.img_url, car.price, car.mileage, car.top_speed, car.production_date, car.facebook_url, car.custoJusto_url, fuel.designation, engine.designation, engine.horse_power, model.designation as model_name, brand.designation as brand_name FROM(((( car inner Join 
@@ -127,7 +133,7 @@ clientGetCars = (req, res) => {
         });
 };
 
-
+//*Completed
 addCar = async (dataObj, callback) => {
     console.log("addCarStart");
     let processResp = {}
@@ -192,7 +198,7 @@ addCar = async (dataObj, callback) => {
 };
 
 
-
+//*Completed
 confirmExistence = async (dataObj, callback) => {
     let processResp = {}
     let arrayOfColumn = ['reg_plate', 'facebook_url', 'custoJusto_url']
@@ -252,7 +258,8 @@ confirmExistence = async (dataObj, callback) => {
 
 
 
-
+//*Completed
+//confirmExistence function backup
 confirmCarExistentByParams = (dataObj, callback) => {
     let processResp = {}
 
@@ -300,7 +307,7 @@ confirmCarExistentByParams = (dataObj, callback) => {
 }
 
 
-
+//*Completed
 updateCar = (dataObj, callback) => {
     let processResp = {}
 
@@ -346,12 +353,13 @@ updateCar = (dataObj, callback) => {
                     processMsg: "Something went wrong, please try again later.",
                 }
             }
-            return callback(true, processResp)
+            return callback(false, processResp)
         });
 
 
 }
 
+//*Completed
 updateCarPicture = async (dataObj, callback) => {
     let processResp = {}
 
@@ -401,7 +409,7 @@ updateCarPicture = async (dataObj, callback) => {
                             processMsg: "Something went wrong, please try again later.",
                         }
                     }
-                    return callback(true, processResp)
+                    return callback(false, processResp)
                 });
 
 
@@ -421,6 +429,228 @@ updateCarPicture = async (dataObj, callback) => {
 
 
 
+// *Completed
+deleteCar = (dataObj, callback) => {
+    let processResp = {}
+
+    if (dataObj.req.body.imgPath === null) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Something is missing in the request that has been send.",
+            }
+        }
+        return callback(false, processResp)
+    }
+
+    sequelize
+        .query(
+            `DELETE  FROM car  WHERE id_car = :id_car`, {
+                replacements: {
+                    id_car: dataObj.req.sanitize(dataObj.req.params.id),
+                }
+            }, {
+                model: carModel.Car
+            }
+        )
+        .then(data => {
+            fileManager.fileExtermination({
+                path: dataObj.req.body.imgPath
+            }, async (deleteSuccess, deleteResult) => {
+                if (deleteSuccess) {
+                    processResp = {
+                        processRespCode: 200,
+                        toClient: {
+                            processResult: data,
+                            processError: null,
+                            processMsg: "The car was successfully deleted",
+                        }
+                    }
+
+                }
+
+                processResp = {
+                    processRespCode: 200,
+                    toClient: {
+                        processResult: data,
+                        processError: null,
+                        processMsg: "The car was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                    }
+                }
+
+
+                return callback(true, processResp)
+            })
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
+        });
+}
+
+
+
+
+
+/**
+ * Supports to other controllers
+ * 
+ * 
+ */
+
+// *Completed
+fetchCarByFuelId = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM car where id_fuel_type =:id_fuel_type", {
+            replacements: {
+                id_fuel_type: id
+            }
+        }, {
+            model: carModel.Car
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+
+
+}
+
+
+
+// *Completed
+fetchCarByEngineId = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM car where id_engine_type =:id_engine_type", {
+            replacements: {
+                id_engine_type: id
+            }
+        }, {
+            model: carModel.Car
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+
+
+}
+
+
+
+// *Completed
+fetchCarByModelId = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM car where id_model =:id_model", {
+            replacements: {
+                id_model: id
+            }
+        }, {
+            model: carModel.Car
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+
+
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -431,5 +661,9 @@ module.exports = {
     addCar,
     confirmExistence,
     updateCar,
-    updateCarPicture
+    updateCarPicture,
+    deleteCar,
+    fetchCarByFuelId,
+    fetchCarByEngineId,
+    fetchCarByModelId
 };

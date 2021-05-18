@@ -285,10 +285,63 @@ initializeBrandModel = async (dataObj, callback) => {
 };
 
 
+
+//*Completed
+deleteBrand = (dataObj, callback) => {
+    let processResp = {}
+    if (!dataObj.canContinue) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is still cars associated to this type of engine.",
+            }
+        }
+
+    }
+
+    sequelize
+        .query(
+            `DELETE  FROM brand  WHERE id_brand = :id_brand`, {
+                replacements: {
+                    id_brand: dataObj.req.sanitize(dataObj.req.params.id),
+                }
+            }, {
+                model: brandModel.Brand
+            }
+        )
+        .then(data => {
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "The engine was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                }
+            }
+
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
+        });
+}
+
 module.exports = {
     updateBrand,
     fetchBrands,
     addBrand,
     initializeBrandModel,
     fetchBrandByName,
+    deleteBrand
 };

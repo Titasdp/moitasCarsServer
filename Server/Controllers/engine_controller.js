@@ -301,6 +301,56 @@ initializeEngineModel = async (dataObj, callback) => {
             return callback(false, processResp)
         });
 };
+//*Completed
+deleteEngine = (dataObj, callback) => {
+    let processResp = {}
+    if (!dataObj.canContinue) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is still cars associated to this type of engine.",
+            }
+        }
+
+    }
+
+    sequelize
+        .query(
+            `DELETE  FROM engine  WHERE id_engine = :id_engine`, {
+                replacements: {
+                    id_engine: dataObj.req.sanitize(dataObj.req.params.id),
+                }
+            }, {
+                model: engineModel.Engine
+            }
+        )
+        .then(data => {
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: "The engine was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                }
+            }
+
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
+        });
+}
 
 
 module.exports = {
@@ -309,5 +359,6 @@ module.exports = {
     fetchEngines,
     initializeEngineModel,
     fetchEngineByName,
-    fetchEngineById
+    fetchEngineById,
+    deleteEngine
 };
