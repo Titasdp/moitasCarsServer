@@ -4,20 +4,21 @@ const imageType = require('image-type');
 
 //Upload File
 fileUpload = async (dataObj, callback) => {
+
     let img;
     let uploadPath;
     let processResp = {}
-    // console.log(dataObj.req.files.img);
+
     if (!dataObj.req.files || Object.keys(dataObj.req.files).length === 0) {
         processResp = {
             processRespCode: 400,
             toClient: {
                 processResult: null,
                 processError: null,
-                processMsg: "There must be an file attach to the request.",
+                processMsg: "There must be a file attach to the request.",
             }
         }
-        return callback(true, processResp)
+        return callback(false, processResp)
     }
     if (dataObj.req.files.img === null) {
         processResp = {
@@ -25,53 +26,118 @@ fileUpload = async (dataObj, callback) => {
             toClient: {
                 processResult: null,
                 processError: null,
-                processMsg: "There must be an file attach to the request.",
+                processMsg: "There must be a file attach to the request.",
             }
         }
-        return callback(true, processResp)
+        return callback(false, processResp)
     }
-    if (await confirmIsImg(dataObj.req.files.img.mimetype)) {
-        console.log(dataObj.req.files.img);
+    if (!confirmIsImg(dataObj.req.files.img.mimetype)) {
+
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Your file must be an image.",
+            }
+        }
+        return callback(false, processResp)
+
     }
 
-    img = dataObj.req.files.img
-    uploadPath = process.cwd() + '/Server/images/' + img.name;
-
-
-    img.mv(uploadPath, function (err) {
-        console.log(err);
-        if (err) {
+    checkFileExistence(process.cwd() + '/Server/images/' + dataObj.req.files.img.name, (exist) => {
+        if (exist) {
             processResp = {
-                processRespCode: 500,
+                processRespCode: 409,
                 toClient: {
                     processResult: null,
                     processError: null,
-                    processMsg: "Something went wrong please ty again later.",
+                    processMsg: "There is already an image with that name, please change the image name.",
                 }
             }
-        } else {
-            processResp = {
-                processRespCode: 200,
-                toClient: {
-                    processResult: uploadPath,
-                    processError: null,
-                    processMsg: "Image uploaded successfully.",
-                }
-            }
+            return callback(false, processResp)
         }
 
-        return callback(false, processResp)
-    })
 
+
+        img = dataObj.req.files.img
+        uploadPath = process.cwd() + '/Server/images/' + img.name;
+
+
+        img.mv(uploadPath, function (err) {
+            let functionSuccess = false
+            if (err) {
+                processResp = {
+                    processRespCode: 500,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "Something went wrong please ty again later.",
+                    }
+                }
+            } else {
+                functionSuccess = true
+                processResp = {
+                    processRespCode: 200,
+                    toClient: {
+                        processResult: uploadPath,
+                        processError: null,
+                        processMsg: "Image uploaded successfully.",
+                    }
+                }
+            }
+
+            return callback(functionSuccess, processResp)
+        })
+    })
 }
 //Delete file
 fileDelete = (dataObj, callback) => {
-    let imgPath = process.cwd() + `/Server/images/adlisa.jpg`;
-    let uploadPath;
+
     let processResp = {}
-    fs.unlink(imgPath, function (err) {
-        console.log(err);
+
+    if (!dataObj.req.files || Object.keys(dataObj.req.files).length === 0) {
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There must be a file attach to the request.",
+            }
+        }
+        return callback(false, processResp)
+    }
+    if (dataObj.req.files.img === null) {
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There must be a file attach to the request.",
+            }
+        }
+        return callback(false, processResp)
+    }
+    if (!confirmIsImg(dataObj.req.files.img.mimetype)) {
+
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Your file must be an image.",
+            }
+        }
+        return callback(false, processResp)
+
+    }
+
+    fs.unlink(dataObj.req.sanitize(dataObj.req.body.oldImgPath), function (err) {
+
+        let callbackSuccess = false
+
         if (err) {
+            console.log(err);
             processResp = {
                 processRespCode: 500,
                 toClient: {
@@ -89,8 +155,9 @@ fileDelete = (dataObj, callback) => {
                     processMsg: "The file was successfully deleted.",
                 }
             }
+            callbackSuccess = true
         }
-        return callback(false, processResp)
+        return callback(callbackSuccess, processResp)
     });
 }
 //getter file 
@@ -150,8 +217,6 @@ checkFileExistence = async (imgPath, callback) => {
         return callback(true)
     })
 }
-
-
 
 confirmIsImg = async (fileMimeType) => {
     if (fileMimeType.includes('image/')) {

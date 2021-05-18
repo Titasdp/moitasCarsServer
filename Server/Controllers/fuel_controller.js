@@ -4,6 +4,7 @@ const uniqid = require('uniqid');
 
 //*Completed
 fetchFuels = (req, callback) => {
+    let processResp = {}
     sequelize
         .query("SELECT * FROM fuel", {
             model: fuelTypeModel.Fuel

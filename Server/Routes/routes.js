@@ -12,7 +12,10 @@ const fuelController = require("../Controllers/fuel_controller")
 const engineController = require("../Controllers/engine_controller")
 //Init>
 const carModelController = require("../Controllers/car_model_controller")
-const userController = require("../Controllers/user_controller")
+const userController = require("../Controllers/user_controller");
+const {
+    sync
+} = require("read-chunk");
 
 /**
  * Todo: 
@@ -308,37 +311,87 @@ router.post("/models", async (req, res) => {
 
 //!<Cars
 router.post("/cars", async (req, res) => {
-
-    if (condition) {
-
+    if (req.body.regPlate === null, req.body.facebookUrl === null, req.body.idEngineType === null, req.body.idModel === null, req.body.idFuelType === null, req.body.price === null, req.body.description === null) {
+        res.status(400).send({
+            processResult: null,
+            processError: null,
+            processMsg: "Please fill in all he required fields.",
+        })
     }
-
-
-
-
-
     await carController.confirmExistence({
         regPlate: req.sanitize(req.body.regPlate),
         facebookUrl: req.sanitize(req.body.facebookUrl),
         custoJustoUrl: req.sanitize(req.body.custoJustoUrl)
     }, (confirmSuccess, confirmResult) => {
-
-        if (confirmSuccess) {
-            await carController.addCar({}, (addSuccess, addResponse) => {
-
-
-            })
+        console.log(confirmSuccess);
+        if (!confirmSuccess) {
+            res.status(confirmResult.processRespCode).send(confirmResult.toClient)
         }
-        res.status(confirmResult.processRespCode).send(confirmResult.toClient)
+        carController.addCar({
+            req: req
+        }, (addSuccess, addResponse) => {
+            res.status(addResponse.processRespCode).send(addResponse.toClient)
+        })
     })
-
-
-
-
-
-    // await fileUploader.fileUpload({
-
 })
+
+
+router.put("/cars/:id", async (req, res) => {
+    if (req.body.regPlate === null, req.body.facebookUrl === null, req.body.idEngineType === null, req.body.idModel === null, req.body.idFuelType === null, req.body.price === null, req.body.description === null) {
+        res.status(400).send({
+            processResult: null,
+            processError: null,
+            processMsg: "Please fill in all he required fields.",
+        })
+    }
+    await carController.confirmExistence({
+        regPlate: req.sanitize(req.body.regPlate),
+        facebookUrl: req.sanitize(req.body.facebookUrl),
+        custoJustoUrl: req.sanitize(req.body.custoJustoUrl)
+    }, (confirmSuccess, confirmResult) => {
+        if (!confirmSuccess) {
+            res.status(confirmResult.processRespCode).send(confirmResult.toClient)
+        }
+        carController.updateCar({
+            req: req
+        }, (updateSuccess, updateResponse) => {
+            res.status(updateResponse.processRespCode).send(updateResponse.toClient)
+        })
+    })
+})
+
+
+router.patch("/cars/:id/image", async (req, res) => {
+    carController.updateCarPicture({
+        req: req
+    }, (updateSuccess, updateResponse) => {
+        res.status(updateResponse.processRespCode).send(updateResponse.toClient)
+    })
+})
+
+router.get("/cars", async (req, res) => {
+    await carController.fetchCars({
+        isAdmin: false
+    }, (fetchSuccess, fetchResponse) => {
+
+        if (!fetchSuccess || fetchResponse.processRespCode === 204) {
+            res.status(fetchResponse.processRespCode).send(fetchResponse.toClient)
+        }
+
+
+        console.log(fetchResponse.toClient.processResult);
+        // carController.fetchCarsImgByPath({
+        //     cars: fetchResponse.toClient.processResult
+        // }, (fetchImgSuccess, fetchImgResponse) => {
+        //     res.status(fetchImgResponse.processRespCode).send(fetchImgResponse.toClient)
+        // })
+
+    })
+})
+
+
+
+
 //!Cars>
 
 

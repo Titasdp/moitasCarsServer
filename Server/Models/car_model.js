@@ -40,10 +40,12 @@ Car.init({
     mileage: {
         type: DataTypes.STRING,
         allowNull: true,
+        defaultValue: 0,
     },
     top_speed: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        defaultValue: 0
     },
     production_date: {
         type: DataTypes.INTEGER,
