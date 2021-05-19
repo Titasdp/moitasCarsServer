@@ -1,11 +1,13 @@
 const brandModel = require("../Models/brand_model")
 const sequelize = require("../Database/connection")
 const uniqid = require('uniqid');
-
+//*Completed
 fetchBrands = (req, callback) => {
+
     let processResp = {}
+    let query = `SELECT * FROM brand`
     sequelize
-        .query("SELECT * FROM brand", {
+        .query(query, {
             model: brandModel.Brand
         })
         .then(data => {
@@ -42,12 +44,55 @@ fetchBrands = (req, callback) => {
 
 // *Completed
 fetchBrandByName = (designation, callback) => {
-    console.log("designation " + designation);
     let processResp = {}
     sequelize
         .query("SELECT * FROM brand where designation =:desc", {
             replacements: {
                 desc: designation
+            }
+        }, {
+            model: brandModel.Brand
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: error,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+};
+
+
+// *Completed
+fetchBrandById = (id, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM brand where id_brand =:id_brand", {
+            replacements: {
+                id_brand: id
             }
         }, {
             model: brandModel.Brand
@@ -166,7 +211,7 @@ updateBrand = (dataObj, callback) => {
             processResp = {
                 processRespCode: 200,
                 toClient: {
-                    processResult: data,
+                    processResult: data[0],
                     processError: null,
                     processMsg: "The brand was updated successfully",
                 }
@@ -289,52 +334,73 @@ initializeBrandModel = async (dataObj, callback) => {
 //*Completed
 deleteBrand = (dataObj, callback) => {
     let processResp = {}
-    if (!dataObj.canContinue) {
+    if (dataObj.fetchConfirmModelExist) {
         processResp = {
             processRespCode: 409,
             toClient: {
                 processResult: null,
                 processError: null,
-                processMsg: "There is still cars associated to this type of engine.",
+                processMsg: "There is still car models associated to this type of engine.",
+            }
+        }
+        return callback(false, processResp)
+    }
+
+    fetchBrandById(dataObj.req.sanitize(dataObj.req.params.id), (fetchSuccess, fetchResult) => {
+
+        if (!fetchSuccess) {
+            return callback(false, fetchResult)
+        }
+        if (fetchResult.toClient.processResult.length > 0) {
+            if (fetchResult.toClient.processResult[0].designation === 'Indefinido') {
+                processResp = {
+                    processRespCode: 409,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "These data cannot be deleted.",
+                    }
+                }
+                return callback(false, processResp)
             }
         }
 
-    }
+        sequelize
+            .query(
+                `DELETE  FROM brand  WHERE id_brand = :id_brand`, {
+                    replacements: {
+                        id_brand: dataObj.req.sanitize(dataObj.req.params.id),
+                    }
+                }, {
+                    model: brandModel.Brand
+                }
+            )
+            .then(data => {
+                processResp = {
+                    processRespCode: 200,
+                    toClient: {
+                        processResult: data,
+                        processError: null,
+                        processMsg: "The engine was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                    }
+                }
 
-    sequelize
-        .query(
-            `DELETE  FROM brand  WHERE id_brand = :id_brand`, {
-                replacements: {
-                    id_brand: dataObj.req.sanitize(dataObj.req.params.id),
+                return callback(true, processResp)
+            })
+            .catch(error => {
+                console.log(error);
+                processResp = {
+                    processRespCode: 500,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "Something went wrong, please try again later.",
+                    }
                 }
-            }, {
-                model: brandModel.Brand
-            }
-        )
-        .then(data => {
-            processResp = {
-                processRespCode: 200,
-                toClient: {
-                    processResult: data,
-                    processError: null,
-                    processMsg: "The engine was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
-                }
-            }
+                return callback(false, processResp)
+            });
+    })
 
-            return callback(true, processResp)
-        })
-        .catch(error => {
-            console.log(error);
-            processResp = {
-                processRespCode: 500,
-                toClient: {
-                    processResult: null,
-                    processError: null,
-                    processMsg: "Something went wrong, please try again later.",
-                }
-            }
-            return callback(false, processResp)
-        });
 }
 
 module.exports = {

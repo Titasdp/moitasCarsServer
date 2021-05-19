@@ -54,7 +54,7 @@ addModel = (dataObj, callback) => {
                 processMsg: "There is already a model with that designation, introduced in the system.",
             }
         }
-        return callback(true, processResp)
+        return callback(false, processResp)
     }
 
     sequelize
@@ -141,6 +141,23 @@ fetchModelByName = (designation, callback) => {
 
 //*Completed
 updateModel = (dataObj, callback) => {
+
+
+    let processResp = {}
+
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "There is already a model with that designation, introduced in the system.",
+            }
+        }
+        return callback(false, processResp)
+    }
+
+
     sequelize
         .query(
             "UPDATE model SET designation = :designation, id_brand=:id_brand Where model.id_model = :id_model;", {
@@ -157,7 +174,7 @@ updateModel = (dataObj, callback) => {
             processResp = {
                 processRespCode: 201,
                 toClient: {
-                    processResult: data,
+                    processResult: data[0],
                     processError: null,
                     processMsg: "A new engine type was been created successfully.",
                 }
@@ -180,7 +197,8 @@ updateModel = (dataObj, callback) => {
 //*Completed
 deleteModel = (dataObj, callback) => {
     let processResp = {}
-    if (!dataObj.canContinue) {
+    console.log(dataObj.fetchConfirmCarExist);
+    if (dataObj.fetchConfirmCarExist) {
         processResp = {
             processRespCode: 409,
             toClient: {
@@ -189,7 +207,7 @@ deleteModel = (dataObj, callback) => {
                 processMsg: "There is still cars associated to this model.",
             }
         }
-
+        return callback(false, processResp)
     }
 
     sequelize
@@ -206,9 +224,9 @@ deleteModel = (dataObj, callback) => {
             processResp = {
                 processRespCode: 200,
                 toClient: {
-                    processResult: data,
+                    processResult: data[0],
                     processError: null,
-                    processMsg: "The model was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                    processMsg: "The model was successfully deleted.",
                 }
             }
 

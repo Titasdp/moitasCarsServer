@@ -138,7 +138,7 @@ addFuel = (dataObj, callback) => {
             toClient: {
                 processResult: null,
                 processError: null,
-                processMsg: "There is already a brand with that designation, introduced in the system.",
+                processMsg: "There is already a fuel type with that designation, introduced in the system.",
             }
         }
         return callback(true, processResp)
@@ -149,7 +149,7 @@ addFuel = (dataObj, callback) => {
             "INSERT INTO fuel (id_fuel_type, designation) VALUES (:fuelType);", {
                 replacements: {
                     fuelType: [
-                        req.sanitize(uniqid(undefined, "-fuel")),
+                        uniqid(undefined, "-fuel"),
                         dataObj.newDesignation,
                     ]
                 }
@@ -202,7 +202,7 @@ updateFuel = (dataObj, callback) => {
             toClient: {
                 processResult: null,
                 processError: null,
-                processMsg: "There is already an engine with that designation, introduced in the system.",
+                processMsg: "There is already a fuel type with that designation, introduced in the system.",
             }
         }
         return callback(true, processResp)
@@ -225,7 +225,7 @@ updateFuel = (dataObj, callback) => {
                 toClient: {
                     processResult: data[0],
                     processError: null,
-                    processMsg: "The brand was updated successfully",
+                    processMsg: "The fuel type was updated successfully",
                 }
             }
             return callback(true, processResp)
@@ -303,7 +303,7 @@ initializeFuelModel = async (dataObj, callback) => {
 //*Completed
 deleteFuel = (dataObj, callback) => {
     let processResp = {}
-    if (!dataObj.canContinue) {
+    if (dataObj.fetchConfirmCarExist) {
         processResp = {
             processRespCode: 409,
             toClient: {
@@ -312,42 +312,68 @@ deleteFuel = (dataObj, callback) => {
                 processMsg: "There is still cars associated with this type of fuel.",
             }
         }
+        return callback(false, processResp)
 
     }
-    sequelize
-        .query(
-            `DELETE  FROM fuel  WHERE id_fuel_type = :id_fuel_type`, {
-                replacements: {
-                    id_fuel_type: dataObj.req.sanitize(dataObj.req.params.id),
-                }
-            }, {
-                model: fuelTypeModel.Fuel
-            }
-        )
-        .then(data => {
-            processResp = {
-                processRespCode: 200,
-                toClient: {
-                    processResult: data,
-                    processError: null,
-                    processMsg: "The fuel type was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
-                }
-            }
 
-            return callback(true, processResp)
-        })
-        .catch(error => {
-            console.log(error);
-            processResp = {
-                processRespCode: 500,
-                toClient: {
-                    processResult: null,
-                    processError: null,
-                    processMsg: "Something went wrong, please try again later.",
+    fetchFuelById(dataObj.req.sanitize(dataObj.req.params.id), (fetchSuccess, fetchResult) => {
+        if (!fetchSuccess) {
+            return callback(false, fetchResult)
+        }
+        if (fetchResult.toClient.processResult.length > 0) {
+            if (fetchResult.toClient.processResult[0].designation === 'Indefinido') {
+                processResp = {
+                    processRespCode: 409,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "These data cannot be deleted.",
+                    }
                 }
+                return callback(false, processResp)
             }
-            return callback(false, processResp)
-        });
+        }
+
+
+        sequelize
+            .query(
+                `DELETE  FROM fuel  WHERE id_fuel_type = :id_fuel_type`, {
+                    replacements: {
+                        id_fuel_type: dataObj.req.sanitize(dataObj.req.params.id),
+                    }
+                }, {
+                    model: fuelTypeModel.Fuel
+                }
+            )
+            .then(data => {
+                processResp = {
+                    processRespCode: 200,
+                    toClient: {
+                        processResult: data,
+                        processError: null,
+                        processMsg: "The fuel type was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                    }
+                }
+
+                return callback(true, processResp)
+            })
+            .catch(error => {
+                console.log(error);
+                processResp = {
+                    processRespCode: 500,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "Something went wrong, please try again later.",
+                    }
+                }
+                return callback(false, processResp)
+            });
+
+
+    })
+
+
 }
 
 
@@ -362,4 +388,5 @@ module.exports = {
     fetchFuelByName,
     fetchFuels,
     initializeFuelModel,
+    deleteFuel
 };

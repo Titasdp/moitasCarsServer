@@ -48,7 +48,16 @@ fetchCarsImgByPath = async (dataObj, callback) => {
 }
 //*completed
 fetchCars = (dataObj, callback) => {
-    let query = ``
+
+    let processResp = {}
+    let query = `SELECT car.reg_plate, car.description, car.img_url as image, car.price, car.mileage, car.top_speed, car.production_date, car.facebook_url, car.custoJusto_url, fuel.designation as fuel, engine.designation as engine, engine.horse_power as engine_horse_Power, model.designation as model_name, brand.designation as brand_name FROM(((( car inner Join 
+        fuel on car.id_fuel_type= fuel.id_fuel_type)
+        Inner Join
+        engine on car.id_engine_type= engine.id_engine)
+        Inner Join
+        model on model.id_model= car.id_model) Inner Join
+        brand on model.id_brand= brand.id_brand)`
+
     if (!dataObj.isAdmin) {
         query = `SELECT car.id_car, car.reg_plate, car.description, car.img_url as image, car.price, car.mileage, car.top_speed, car.production_date, car.facebook_url, car.custoJusto_url, fuel.designation as fuel, engine.designation as engine, engine.horse_power as engine_horse_Power, model.designation as model_name, brand.designation as brand_name FROM(((( car inner Join 
                 fuel on car.id_fuel_type= fuel.id_fuel_type)
@@ -59,7 +68,7 @@ fetchCars = (dataObj, callback) => {
                 brand on model.id_brand= brand.id_brand)`
     }
 
-    // where car.id_car =0;
+
     sequelize
         .query(query, {
             model: carModel.Car
@@ -161,7 +170,7 @@ addCar = async (dataObj, callback) => {
                             dataObj.req.sanitize(dataObj.req.body.productionDate),
                             dataObj.req.sanitize(dataObj.req.body.facebookUrl),
                             dataObj.req.sanitize(dataObj.req.body.custoJustoUrl),
-                            dataObj.req.sanitize(dataObj.req.body.publisherId),
+                            dataObj.publisherId,
                             dataObj.req.sanitize(dataObj.req.body.idFuelType),
                             dataObj.req.sanitize(dataObj.req.body.idEngineType),
                             dataObj.req.sanitize(dataObj.req.body.idModel),
@@ -427,8 +436,6 @@ updateCarPicture = async (dataObj, callback) => {
 
 }
 
-
-
 // *Completed
 deleteCar = (dataObj, callback) => {
     let processResp = {}
@@ -459,28 +466,19 @@ deleteCar = (dataObj, callback) => {
             fileManager.fileExtermination({
                 path: dataObj.req.body.imgPath
             }, async (deleteSuccess, deleteResult) => {
-                if (deleteSuccess) {
-                    processResp = {
-                        processRespCode: 200,
-                        toClient: {
-                            processResult: data,
-                            processError: null,
-                            processMsg: "The car was successfully deleted",
-                        }
-                    }
 
+                let msg = "The car was successfully deleted"
+                if (!deleteSuccess) {
+                    msg = "The car was successfully deleted, but his img is still in the system please contact an developer for aid on removing it."
                 }
-
                 processResp = {
                     processRespCode: 200,
                     toClient: {
                         processResult: data,
                         processError: null,
-                        processMsg: "The car was successfully deleted, but his img is still in the system please contact an developer for aid on removing it.",
+                        processMsg: msg,
                     }
                 }
-
-
                 return callback(true, processResp)
             })
         })
@@ -497,10 +495,6 @@ deleteCar = (dataObj, callback) => {
             return callback(false, processResp)
         });
 }
-
-
-
-
 
 /**
  * Supports to other controllers

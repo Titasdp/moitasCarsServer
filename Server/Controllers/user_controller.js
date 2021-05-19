@@ -6,49 +6,77 @@ const generatePassPack = require("../Middleware/randomPassword")
 const tokenPack = require("../Middleware/tokenFunctions")
 const uniqid = require('uniqid');
 
-userLogin = (data, callback) => {
+//*Completed
+userLogin = (dataObj, callback) => {
+    let processResp = {}
+    if (!dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "The username and password you entered did not match our records.",
+            }
+        }
+        return callback(false, processResp)
+    }
     encryptPack.decryptPassword({
-        password: data.password,
-        hash: data.userData.password,
+        password: dataObj.password,
+        hash: dataObj.userData.password,
     }, (isError, decryptResult) => {
         if (isError) {
-            return callback(false, {
-                msg: "something went wrong please try again, later",
-                error: decryptResult,
-                respCode: 500,
-                token: null
-            })
+            console.log(decryptResult);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
+
         } else {
             if (decryptResult) {
                 tokenPack.generateToken({
                         user: {
-                            id: data.userData.id_user,
+                            id: dataObj.userData.id_user,
                             userCode: "moitasCars"
                         }
                     },
                     token => {
-                        return callback(true, {
-                            msg: "Successful Login",
-                            error: null,
-                            token: token,
-                            respCode: 200,
-                            username: data.userData.username
-                        });
+                        processResp = {
+                            processRespCode: 200,
+                            toClient: {
+                                processResult: {
+                                    token: token,
+                                    username: dataObj.userData.username
+                                },
+                                processError: null,
+                                processMsg: "Successful Login",
+                            }
+                        }
+                        return callback(true, processResp)
                     }
                 );
             } else {
-                return callback(false, {
-                    msg: "The username and password you entered did not match our records.",
-                    error: "",
-                    respCode: 400,
-                    token: null
-                })
+                processResp = {
+                    processRespCode: 400,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "The username and password you entered did not match our records.",
+                    }
+                }
+                return callback(false, processResp)
             }
         }
     })
 }
 
+//*Completed
 getUserByName = (req, callback) => {
+    let processResp = {}
     sequelize
         .query("SELECT * FROM user where user.username = :username", {
             replacements: {
@@ -58,30 +86,120 @@ getUserByName = (req, callback) => {
             model: userModel.User
         })
         .then(data => {
-            return callback(true, data[0])
+
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
 
-
+//*Completed
 getUserById = (req, callback) => {
+    let processResp = {}
     sequelize
-        .query("SELECT * FROM user where user.id_user = :id_user", {
+        .query("SELECT * FROM user where user.id_user =:id_user", {
             replacements: {
-                id_user: req.sanitize(req.params.id_user)
+                id_user: req.sanitize(req.params.id)
             }
         }, {
             model: userModel.User
         })
         .then(data => {
-            return callback(true, data)
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data[0].length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data[0],
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
         })
         .catch(error => {
-            return callback(false, error)
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         });
 };
+
+
+//*Completed
+fetchUsers = (req, callback) => {
+    let processResp = {}
+    sequelize
+        .query("SELECT * FROM user", {
+            model: userModel.User
+        })
+        .then(data => {
+            let respCode = 200
+            let respMsg = "Data fetched successfully."
+            if (data.length === 0) {
+                respCode = 204
+                respMsg = "Fetch process completed successfully, but there is no content."
+            }
+            processResp = {
+                processRespCode: respCode,
+                toClient: {
+                    processResult: data,
+                    processError: null,
+                    processMsg: respMsg,
+                }
+            }
+            return callback(true, processResp)
+        })
+        .catch(error => {
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
+        });
+};
+
+
+
 
 addUser = (req, callback) => {
     if (req.body.name) {
@@ -149,33 +267,55 @@ updateUser = (req, callback) => {
         });
 };
 
-updateUserPassword = (data, callback) => {
-
+updateUserPassword = (dataObj, callback) => {
+    let processResp = {}
+    if (!dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 400,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "The username and password you entered did not match our records.",
+            }
+        }
+        return callback(false, processResp)
+    }
     encryptPack.decryptPassword({
-        password: data.oldPassword,
-        hash: data.userData.password
+        password: dataObj.oldPassword,
+        hash: dataObj.userData.password
     }, (isError, decryptResult) => {
         if (isError) {
-            return callback(false, {
-                msg: "something went wrong please try again, later",
-                error: decryptResult,
-                respCode: 500,
-            })
+            console.log(decryptResult);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong, please try again later.",
+                }
+            }
+            return callback(false, processResp)
         } else {
             if (decryptResult) {
-                encryptPack.encryptPassword(data.newPassword, (isErrorEncrypting, encryptResult) => {
+                encryptPack.encryptPassword(dataObj.newPassword, (isErrorEncrypting, encryptResult) => {
                     if (isErrorEncrypting) {
-                        return callback(false, {
-                            msg: "Something went wrong please try again, later!",
-                            error: encryptResult,
-                            respCode: 500,
-                        })
+                        processResp = {
+                            processRespCode: 500,
+                            toClient: {
+                                processResult: null,
+                                processError: null,
+                                processMsg: "Something went wrong, please try again later.",
+                            }
+                        }
+                        return callback(false, processResp)
                     } else {
+
+
                         sequelize
                             .query(
                                 "UPDATE user SET password = :newPassword  Where user.id_user = :id_user", {
                                     replacements: {
-                                        id_user: data.userData.id_user,
+                                        id_user: dataObj.userData.id_user,
                                         newPassword: encryptResult,
                                     }
                                 }, {
@@ -183,12 +323,17 @@ updateUserPassword = (data, callback) => {
                                 }
                             )
                             .then(data => {
-                                return callback(true, {
-                                    data: data[0],
-                                    msg: "User password updated successfully.",
-                                    error: null,
-                                    respCode: 201,
-                                })
+
+                                processResp = {
+                                    processRespCode: 200,
+                                    toClient: {
+                                        processResult: data[0],
+                                        processError: null,
+                                        processMsg: "User password updated successfully.",
+                                    }
+                                }
+                                return callback(false, processResp)
+
                             })
                             .catch(error => {
                                 return callback(false, {
@@ -201,23 +346,108 @@ updateUserPassword = (data, callback) => {
                     }
                 })
             } else {
-                return callback(false, {
-                    data: null,
-                    msg: "The password that has been introduce doesn't match our data.",
-                    error: null,
-                    respCode: 401,
-                })
+                processResp = {
+                    processRespCode: 400,
+                    toClient: {
+                        processResult: null,
+                        processError: null,
+                        processMsg: "The actual password doesn't match our records",
+                    }
+                }
+                return callback(false, processResp)
             }
         }
     })
 };
 
 
+// *Completed
+initUser = (dataObj, callback) => {
+    let processResp = {}
+    if (dataObj.fetchConfirmExist) {
+        processResp = {
+            processRespCode: 409,
+            toClient: {
+                processResult: null,
+                processError: null,
+                processMsg: "Cannot complete the process this function can only be called one time, and it has been already called.",
+            }
+        }
+        return callback(true, processResp)
+    }
+    let generatedPassword = generatePassPack.generateRandomPass()
+    // let insertArray = [
+    //     [uniqid(undefined, '-user'), 'moitasAdmin', generatedPassword],
+    // ]
+
+
+    encryptPack.encryptPassword(generatedPassword, (isError, encryptResult) => {
+
+
+
+        if (isError) {
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please try again later.",
+                }
+            }
+
+            return callback(false, processResp)
+        } else {
+            let insertArray = [
+                [uniqid(undefined, '-user'), 'moitasAdmin', encryptResult],
+            ]
+            sequelize
+                .query(
+                    `INSERT INTO user (id_user, username, password) VALUES ${insertArray.map(element => '(?)').join(',')}`, {
+                        replacements: insertArray
+                    }, {
+                        model: userModel.User
+                    }
+                ).then(data => {
+
+
+                    processResp = {
+                        processRespCode: 201,
+                        toClient: {
+                            processResult: {
+                                data: data,
+                                generatedPassword: generatedPassword
+                            },
+                            processError: null,
+                            processMsg: "Data introduced successfully.",
+                        }
+                    }
+                    return callback(false, processResp)
+
+                }).catch(insertError => {
+                    console.log(insertError);
+                    let processResp = {
+                        processRespCode: 500,
+                        toClient: {
+                            processResult: null,
+                            processError: error,
+                            processMsg: "Something went wrong please try again later.",
+                        }
+                    }
+                    return callback(false, processResp)
+                });
+        }
+    })
+
+};
+
+
 module.exports = {
     addUser,
     updateUser,
-    getUserById,
     updateUserPassword,
     getUserByName,
-    userLogin
+    initUser,
+    fetchUsers,
+    userLogin,
+    getUserById
 };

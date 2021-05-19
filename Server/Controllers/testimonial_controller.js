@@ -5,10 +5,6 @@ const uniqid = require('uniqid');
 //*Completed
 fetchTestimonials = (dataObj, callback) => {
     let query = `SELECT * FROM testimonial`
-
-    if (!dataObj.isAdmin) {
-        query = `SELECT testimonial.person_name, testimonial.testimonial_text FROM testimonial`
-    }
     let processResp = {}
 
 
@@ -53,7 +49,7 @@ fetchTestimonials = (dataObj, callback) => {
 addTestimonial = (dataObj, callback) => {
     let processResp = {}
 
-    if (dataObj.req.personName === null || dataObj.req.testimonialText === null) {
+    if (dataObj.req.body.personName === null || dataObj.req.body.testimonialText === null) {
         processResp = {
             processRespCode: 409,
             toClient: {
@@ -73,7 +69,7 @@ addTestimonial = (dataObj, callback) => {
                         uniqid(undefined, "-testimonial"),
                         dataObj.req.sanitize(dataObj.req.body.personName),
                         dataObj.req.sanitize(dataObj.req.body.testimonialText),
-                        dataObj.req.sanitize(dataObj.req.body.idUser),
+                        dataObj.publisherId,
                     ]
                 }
             }, {

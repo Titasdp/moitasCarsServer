@@ -12,21 +12,54 @@ const generateToken = (user_info, callback) => {
     return callback(token);
 };
 
-const validateToken = (token, callback) => {
+const validateTokenAndIfAdmin = (token, callback) => {
+    let processResp = {}
     if (!token) {
-        return callback(false);
+
+        processResp = {
+            processRespCode: 401,
+            toClient: {
+                processResult: null,
+                processError: error,
+                processMsg: "INVALID TOKEN!",
+            }
+        }
+        return callback(false, processResp)
     }
     let secret = process.env.SECRET;
-    jwt.verify(token.replace("Bearer ", ""), secret, function (error, decoded) {
+    jwt.verify(token.replace("Bearer ", ""), secret, function (error, brokenToken) {
+
         if (error) {
-            return callback(false);
+            console.log(error);
+            processResp = {
+                processRespCode: 500,
+                toClient: {
+                    processResult: null,
+                    processError: null,
+                    processMsg: "Something went wrong please try again later",
+                }
+            }
+            return callback(false, processResp)
         } else {
-            return callback(true);
+            processResp = {
+                processRespCode: 200,
+                toClient: {
+                    processResult: brokenToken.data.user.id,
+                    processError: null,
+                    processMsg: "VALID TOKEN!",
+                }
+            }
+            return callback(true, processResp)
+
+
         }
+
+        // return callback(true);
+
     });
 };
 
 module.exports = {
     generateToken,
-    validateToken,
+    validateTokenAndIfAdmin,
 };
